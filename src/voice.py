@@ -8,16 +8,8 @@ url = f_data.read()["settings"]["url"]
 port = f_data.read()["settings"]["port"]
 default_model = f_data.read()["settings"]["default_model"]
 
-def find_url(string): 
-    # findall() 正規表現に一致する文字列を検索する
-    url = re.findall('https?://(?:[-A-Za-z0-9_.]|(?:%[\da-fA-F]{2}))+', string)
-    return url 
 
 def create_voice(mscontent, user_id):
-# 音素データ生成
-    
-    for i in find_url(mscontent):
-        mscontent = mscontent.replace(i, '、url、')
     
     if type(user_id) == int:
         user_id = str(user_id)

@@ -160,6 +160,9 @@ async def on_message(message):
 
         if message.channel.id == listen_channel[message.guild.id]:
 
+            message.content = re.sub('<:.+:.+>', '', message.content)
+            message.content = re.sub("https?://(?:[-A-Za-z0-9_.]|(?:%[\da-fA-F]{2}))+", '、url、', message.content)
+
             if message.content != "":
 
                 if len(message.content) >= read_limit:

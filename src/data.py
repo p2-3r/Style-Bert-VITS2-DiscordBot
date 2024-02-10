@@ -64,3 +64,4 @@ def fullnum2halfnum(input):
     l = input.translate(map)
 
     return l
+
