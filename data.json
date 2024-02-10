@@ -1,0 +1,13 @@
+{
+    "settings": {
+        "bot_token": "ここにBOTのトークン",
+        "style_bertvits2_path": "C:/ExampleFolder/Style-Bert-VITS2",
+        "url": "127.0.0.1",
+        "port": "5000",
+        "default_model": "0",
+        "prefix": "s!"
+    },
+    "user_data": {
+
+    }
+}
