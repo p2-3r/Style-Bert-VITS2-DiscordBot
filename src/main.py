@@ -11,6 +11,7 @@ TOKEN = f_data.read()["settings"]["bot_token"]
 listen_channel = {}
 play_waitlist = {}
 prefix = f_data.read()["settings"]["prefix"]
+read_limit = f_data.read()["settings"]["read_limit"]
 
 intents=discord.Intents.all()
 client = discord.Client(intents=intents)
@@ -49,8 +50,31 @@ async def on_message(message):
             listen_channel[message.guild.id] = message.channel.id
             await message.author.voice.channel.connect()
             await message.channel.send("接続しました\n読み上げるチャンネル: **" + message.channel.name + "**")
-            path = f_voice.create_voice("接続しました", message.author.id)
-            message.guild.voice_client.play(discord.FFmpegPCMAudio(path))
+
+            try:
+                play_waitlist[message.guild.id].append({"content": "接続しました", "userid": message.author.id})
+            except KeyError:
+                play_waitlist[message.guild.id] = []
+                play_waitlist[message.guild.id].append({"content": "接続しました", "userid": message.author.id})
+
+            playsound_list = play_waitlist[message.guild.id]
+                
+            if len(playsound_list) == 1: 
+                while playsound_list != []:
+                    path = f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"])
+
+                    try:
+                        message.guild.voice_client.play(discord.FFmpegPCMAudio(path))
+                    except discord.errors.ClientException:
+                        playsound_list = []
+                        return
+
+                    with wave.open(path, 'rb') as f:
+                        fr = f.getframerate()
+                        fn = f.getnframes()
+
+                    await asyncio.sleep(1.0 * (fn/fr) + 0.25)
+                    playsound_list.pop(0)
         
         elif message.guild.voice_client is not None:
             await message.channel.send("すでにボイスチャンネルに接続しています")
@@ -136,32 +160,35 @@ async def on_message(message):
 
         if message.channel.id == listen_channel[message.guild.id]:
 
-            
+            if message.content != "":
 
-            try:
-                play_waitlist[message.guild.id].append({"content": message.content, "userid": message.author.id})
-            except KeyError:
-                play_waitlist[message.guild.id] = []
-                play_waitlist[message.guild.id].append({"content": message.content, "userid": message.author.id})
+                if len(message.content) >= read_limit:
+                    message.content = message.content[:read_limit] + "、以下略"
 
-            playsound_list = play_waitlist[message.guild.id]
-            
-            if len(playsound_list) == 1: 
-                while playsound_list != []:
-                    path = f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"])
+                try:
+                    play_waitlist[message.guild.id].append({"content": message.content, "userid": message.author.id})
+                except KeyError:
+                    play_waitlist[message.guild.id] = []
+                    play_waitlist[message.guild.id].append({"content": message.content, "userid": message.author.id})
 
-                    try:
-                        message.guild.voice_client.play(discord.FFmpegPCMAudio(path))
-                    except discord.errors.ClientException:
-                        playsound_list = []
-                        return
+                playsound_list = play_waitlist[message.guild.id]
+                
+                if len(playsound_list) == 1: 
+                    while playsound_list != []:
+                        path = f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"])
 
-                    with wave.open(path, 'rb') as f:
-                        fr = f.getframerate()
-                        fn = f.getnframes()
+                        try:
+                            message.guild.voice_client.play(discord.FFmpegPCMAudio(path))
+                        except discord.errors.ClientException:
+                            playsound_list = []
+                            return
 
-                    await asyncio.sleep(1.0 * (fn/fr) + 0.25)
-                    playsound_list.pop(0)
+                        with wave.open(path, 'rb') as f:
+                            fr = f.getframerate()
+                            fn = f.getnframes()
+
+                        await asyncio.sleep(1.0 * (fn/fr) + 0.25)
+                        playsound_list.pop(0)
                 
 @client.event
 async def on_voice_state_update(member, before, after):
