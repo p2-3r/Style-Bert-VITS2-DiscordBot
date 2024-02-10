@@ -158,6 +158,9 @@ async def on_message(message):
 
     elif message.guild.voice_client is not None:
 
+        if message.content.startswith(";"):
+            return
+
         if message.channel.id == listen_channel[message.guild.id]:
 
             message.content = re.sub('<:.+:.+>', '', message.content)
