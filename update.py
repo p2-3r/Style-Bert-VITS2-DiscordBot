@@ -2,16 +2,14 @@ import os
 import shutil
 import json
 
-deletelist = ["run_botandAPI.bat","run_bot.bat","run_API.bat","requirements.txt","mscontent.wav","README.md","LICENSE"]
-deletefolderlist = ["venv","src"]
+deletelist = os.listdir("./")
 
 for i in deletelist:
-    if os.path.exists(i):
-        os.remove(i)
-
-for i in deletefolderlist:
-    if os.path.exists(i):
-        shutil.rmtree(i)
+    if not i in ["data.json","update (need git).bat","update.py","Discord-ReadTextBot-for-Style-Bert-VITS2-API"]:
+        if os.path.isfile(i):
+            os.remove(i)
+        if os.path.isdir(i):
+            shutil.rmtree(i)
         
 if os.path.exists("data.json"):
     os.rename("data.json", "data_old.json")
