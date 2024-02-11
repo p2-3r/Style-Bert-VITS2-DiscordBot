@@ -3,6 +3,7 @@ Style-Bert-VITS2のAPIを使ったDiscordの読み上げボットです
 
 ## 必要なもの
 Python(作者は3.10.9で動作確認)
+Style-Bert-VITS2
 
 ## 起動準備
     このフォルダ全体をダウンロードしてどこかに置きます。
