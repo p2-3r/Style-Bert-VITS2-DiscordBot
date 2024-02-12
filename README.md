@@ -21,6 +21,8 @@ Style-Bert-VITS2のAPIを使ったDiscordの読み上げボットです
 
 ✅　ボイスチャンネルにBOTしかいなくなった時の自動退出
 
+✅　プレフィックスの変更に対応しています 例: s!ping → a?ping
+
 ✅　コマンドでボイスチャンネルに誰かが参加したときに自動で入ってくれるように設定できます
 
 ## 必要なもの
@@ -95,19 +97,29 @@ Style-Bert-VITS2のAPIのみを起動したい場合は "run_API.bat"
 
 <ins>s!change_voice models</ins> 使用できるモデル一覧を表示します
 
-<ins>s!change_voice models (number)</ins> 上のコマンドで表示したモデル一覧の番号を選択してそのモデルに変更します 例: **s!change_voice models 3**
+<ins>s!change_voice models (number)</ins> 上のコマンドで表示したモデル一覧の番号を選択してそのモデルに変更します 
+
+例: **s!change_voice models 3**
 
 <ins>s!change_voice length</ins> このコマンドの使用方法を表示します
 
-<ins>s!change_voice length (number)</ins> 読み上げ速度を変更します 小さいほど早く、大きいほど遅く読み上げます 例: **s!change_voice length 1.5**
+<ins>s!change_voice length (number)</ins> 読み上げ速度を変更します 小さいほど早く、大きいほど遅く読み上げます 
+
+例: **s!change_voice length 1.5**
 
 ### <ins>server_settingsコマンドの使用方法</ins>
 
-<ins>s!server_settings status</ins> このサーバーの現在の設定を表示します このserver_settingsコマンド以外を使用するにはそのサーバーの管理者である必要があります
+<ins>s!server_settings status</ins> このサーバーの現在の設定を表示します 
 
-<ins>s!server_settings auto_join</ins> そのサーバーのボイスチャンネルに誰かが参加したとき "s!join" コマンドを使用しなくても自動で参加してくれるようになります
+このserver_settingsコマンド以外を使用するにはそのサーバーの管理者である必要があります
 
-<ins>s!server_settings auto_ch</ins> そのサーバーの自動参加時に読み上げるチャンネルを、このコマンドを使用したチャンネルに設定します
+<ins>s!server_settings auto_join</ins> そのサーバーのボイスチャンネルに誰かが参加したとき 
+
+"s!join" コマンドを使用しなくても自動で参加してくれるようになります
+
+<ins>s!server_settings auto_ch</ins> そのサーバーの自動参加時に読み上げるチャンネルを、
+
+このコマンドを使用したチャンネルに設定します
 
 ## ボットの詳細設定
 
