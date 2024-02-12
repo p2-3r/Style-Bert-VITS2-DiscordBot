@@ -85,6 +85,8 @@ Style-Bert-VITS2のAPIのみを起動したい場合は "run_API.bat"
 
 * <ins>s!ping</ins> pong!(BOTの起動確認にどうぞ)
 
+* <ins>s!wav (content)</ins> 指定した内容の音声ファイルを添付して送ってくれます
+
 * <ins>s!join</ins> 使用した人がいるボイスチャンネルに接続します
 
 * <ins>s!change_voice</ins> 使用する声を変更するためのコマンドのヘルプを表示します

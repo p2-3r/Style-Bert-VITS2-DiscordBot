@@ -40,6 +40,7 @@ async def on_message(message):
     elif message.content == prefix + "help":
         embed = discord.Embed(title="このBOTのヘルプ")
         embed.add_field(name="**{prefix}ping**".format(prefix=prefix),value="pong!")
+        embed.add_field(name="**{prefix}wav (content)**".format(prefix=prefix),value="指定した内容を生成してその音声ファイルを添付したメッセージを送信します")
         embed.add_field(name="**{prefix}join**".format(prefix=prefix),value="使用した人がいるボイスチャンネルに接続します")
         embed.add_field(name="**{prefix}leave**".format(prefix=prefix),value="ボイスチャンネルから切断します")
         embed.add_field(name="**{prefix}change_voice**".format(prefix=prefix),value="使用する声を変更するためのコマンドのヘルプを表示します")
@@ -48,6 +49,18 @@ async def on_message(message):
     
     elif message.content == prefix + "ping":
         await message.channel.send("pong!")
+
+    elif message.content.startswith(prefix + "wav"):
+        msg_len = len(message.content)
+        if msg_len <= 4 + len(prefix):
+            embed = discord.Embed(title="**wav** コマンドの使用方法", description="{prefix}wav (生成したい音声の内容)".format(prefix=prefix))
+            await message.channel.send(embed=embed)
+        else:
+            printcontent = message.content[4 + len(prefix):]
+            if printcontent != "":
+                path = f_voice.create_voice(printcontent, message.author.id)
+                await message.channel.send(file=discord.File(path))
+
 
     elif message.content == prefix + 'join':
         if message.author.voice is None:

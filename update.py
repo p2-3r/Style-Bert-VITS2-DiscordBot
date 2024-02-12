@@ -1,6 +1,7 @@
 import os
 import shutil
 import json
+import time
 
 deletelist = os.listdir("./")
 
@@ -42,3 +43,7 @@ with open('data.json', 'w') as f:
 for i in ["data_old.json","update_old.py","update_old.bat"]:
     if os.path.exists(i):
         os.remove(i)
+
+print("Update completed successfully!")
+
+time.sleep(5)
