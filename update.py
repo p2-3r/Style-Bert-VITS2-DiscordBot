@@ -5,7 +5,7 @@ import json
 deletelist = os.listdir("./")
 
 for i in deletelist:
-    if not i in ["data.json","update (need git).bat","update.py","Discord-ReadTextBot-for-Style-Bert-VITS2-API"]:
+    if not i in ["data.json","update (need git).bat","update.py","Discord-ReadTextBot-for-Style-Bert-VITS2-API",".git"]:
         if os.path.isfile(i):
             os.remove(i)
         if os.path.isdir(i):
@@ -29,12 +29,12 @@ shutil.rmtree("Discord-ReadTextBot-for-Style-Bert-VITS2-API")
 newjson = json.load(open('data.json', 'r', encoding="UTF-8"))
 oldjson = json.load(open('data_old.json', 'r', encoding="UTF-8"))
 
-k_list = oldjson["settings"].keys()
-
-for i in k_list:
+for i in oldjson["settings"].keys():
     newjson["settings"][i] = oldjson["settings"][i]
 
-newjson["user_data"] = oldjson["user_data"]
+for i in ["user_data", "server_data"]:
+    if i in oldjson:
+        newjson[i] = oldjson[i]
 
 with open('data.json', 'w') as f:
     json.dump(newjson, f, indent=4)
