@@ -79,17 +79,35 @@ Style-Bert-VITS2のAPIのみを起動したい場合は "run_API.bat"
 
 プレフィックスを変更している場合はそのプレフィックスを使用してください
 
-* "**s!help**" ヘルプを表示します
+* <ins>s!help</ins> ヘルプを表示します
 
-* "**s!ping**" pong!(BOTの起動確認にどうぞ)
+* <ins>s!ping</ins> pong!(BOTの起動確認にどうぞ)
 
-* "**s!join**" 使用した人がいるボイスチャンネルに接続します
+* <ins>s!join</ins> 使用した人がいるボイスチャンネルに接続します
 
-* "**s!change_voice**" 使用する声を変更するためのコマンドのヘルプを表示します
+* <ins>s!change_voice</ins> 使用する声を変更するためのコマンドのヘルプを表示します
 
-* "**s!server_settings**" 自動参加などサーバーに関する設定を変更するためのコマンドのヘルプを表示します
+* <ins>s!server_settings</ins> 自動参加などサーバーに関する設定を変更するためのコマンドのヘルプを表示します
 
 もしBOTが読み上げてくれなくなったら、BOTのボイスチャンネルへの再接続か、BOT自体の再起動を試してみてください
+
+### <ins>change_voiceコマンドの使用方法</ins>
+
+<ins>s!change_voice models</ins> 使用できるモデル一覧を表示します
+
+<ins>s!change_voice models (number)</ins> 上のコマンドで表示したモデル一覧の番号を選択してそのモデルに変更します 例: **s!change_voice models 3**
+
+<ins>s!change_voice length</ins> このコマンドの使用方法を表示します
+
+<ins>s!change_voice length (number)</ins> 読み上げ速度を変更します 小さいほど早く、大きいほど遅く読み上げます 例: **s!change_voice length 1.5**
+
+### <ins>server_settingsコマンドの使用方法</ins>
+
+<ins>s!server_settings status</ins> このサーバーの現在の設定を表示します このserver_settingsコマンド以外を使用するにはそのサーバーの管理者である必要があります
+
+<ins>s!server_settings auto_join</ins> そのサーバーのボイスチャンネルに誰かが参加したとき "s!join" コマンドを使用しなくても自動で参加してくれるようになります
+
+<ins>s!server_settings auto_ch</ins> そのサーバーの自動参加時に読み上げるチャンネルを、このコマンドを使用したチャンネルに設定します
 
 ## ボットの詳細設定
 
