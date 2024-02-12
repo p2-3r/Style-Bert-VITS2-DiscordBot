@@ -12,6 +12,7 @@ listen_channel = {}
 play_waitlist = {}
 prefix = f_data.read()["settings"]["prefix"]
 read_limit = f_data.read()["settings"]["read_limit"]
+pre_joinvoice = False
 
 intents=discord.Intents.all()
 client = discord.Client(intents=intents)
@@ -31,12 +32,18 @@ async def on_message(message):
     if message.author.bot:
         return
     
+    elif message.channel.guild == None:
+        if message.content.startswith(prefix):
+            await message.channel.send("このBOTの機能はDMでは利用できません")
+        return
+    
     elif message.content == prefix + "help":
         embed = discord.Embed(title="このBOTのヘルプ")
         embed.add_field(name="**{prefix}ping**".format(prefix=prefix),value="pong!")
         embed.add_field(name="**{prefix}join**".format(prefix=prefix),value="使用した人がいるボイスチャンネルに接続します")
         embed.add_field(name="**{prefix}leave**".format(prefix=prefix),value="ボイスチャンネルから切断します")
         embed.add_field(name="**{prefix}change_voice**".format(prefix=prefix),value="使用する声を変更するためのコマンドのヘルプを表示します")
+        embed.add_field(name="**{prefix}server_settings**".format(prefix=prefix),value="自動参加などサーバーに関する設定のためのヘルプを表示します")
         await message.channel.send(embed=embed)
     
     elif message.content == prefix + "ping":
@@ -49,7 +56,7 @@ async def on_message(message):
         elif message.guild.voice_client is None:
             listen_channel[message.guild.id] = message.channel.id
             await message.author.voice.channel.connect()
-            await message.channel.send("接続しました\n読み上げるチャンネル: **" + message.channel.name + "**")
+            await message.channel.send("接続しました\n読み上げるチャンネル: <#" + str(message.channel.id) + ">")
 
             try:
                 play_waitlist[message.guild.id].append({"content": "接続しました", "userid": message.author.id})
@@ -84,16 +91,76 @@ async def on_message(message):
         if message.guild.voice_client is None:
             await message.channel.send("接続していません")
             return
-        
-        listen_channel.pop(message.guild.id)
-        play_waitlist[message.guild.id] = []
-        await message.guild.voice_client.disconnect()
-        await message.channel.send("退出しました")
+        if message.channel.guild.voice_client is not None:
+            listen_channel.pop(message.guild.id)
+            play_waitlist[message.guild.id] = []
+            await message.guild.voice_client.disconnect()
+            await message.channel.send("退出しました")
+
+    elif message.content.startswith(prefix + "server_settings"):
+        msg_len = len(message.content)
+        if msg_len <= 16 + len(prefix):
+            embed = discord.Embed(title="**settings** コマンドの使用方法")
+            embed.add_field(name="__**{prefix}server_settings status**__".format(prefix=prefix),value="このサーバーの現在の設定を表示します。このsettingsコマンド以外はそのサーバーの管理者でないと使用できません")
+            embed.add_field(name="__**{prefix}server_settings auto_join**__".format(prefix=prefix),value="このコマンドの使用でボイスチャットに誰かが参加したとき自動参加するかしないかを切り替えられます")
+            embed.add_field(name="__**{prefix}server_settings auto_ch**__".format(prefix=prefix),value="自動参加時に読み上げるテキストチャンネルを設定します")
+            await message.channel.send(embed=embed)
+        else:
+            is_admin = message.author.guild_permissions.administrator
+
+            if message.content.startswith(prefix + "server_settings status"):
+                current_server_data = f_data.read_serverdata(message.guild.id)
+                embed = discord.Embed(title="**{server_name}** の現在設定".format(server_name=message.guild.name))
+                embed.add_field(name="ボイスチャンネルへの自動参加",value=str(current_server_data["auto_join"]))
+                read_channel_id = str(current_server_data["auto_join_read_channel"])
+
+                if read_channel_id.isdecimal():
+                    l = "<#" + read_channel_id + ">"
+                else:
+                    l = "None"
+
+                embed.add_field(name="自動参加時に読み上げるチャンネル",value=l)
+                await message.channel.send(embed=embed)
+
+            elif message.content.startswith(prefix + "server_settings auto_join"):
+
+                if is_admin:
+                    current_server_data = f_data.read_serverdata(message.guild.id)
+
+                    if current_server_data["auto_join"] == False:
+                        current_server_data["auto_join"] = True
+                        p_ms = ""
+                        if current_server_data["auto_join_read_channel"] is None:
+                            current_server_data["auto_join_read_channel"] = message.channel.id
+                            p_ms = "\n自動参加時の読み上げるチャンネルを <#{ms_channel}> に設定しました\n変更したい場合は `{prefix}server_settings auto_ch` コマンドを使用してください".format(ms_channel=str(message.channel.id), prefix=prefix)
+
+                        ml = "ON"
+
+                    elif current_server_data["auto_join"] == True:
+                        current_server_data["auto_join"] = False
+                        p_ms = ""
+                        ml = "OFF"
+                        
+                    f_data.write_serverdata(message.guild.id, current_server_data)
+
+                    await message.channel.send("自動参加機能を**{ml}**にしました{p_ms}".format(ml=ml, p_ms=p_ms))
+                else:
+                    await message.channel.send("このコマンドはサーバーの管理者でないと使用できません")
+
+            elif message.content.startswith(prefix + "server_settings auto_ch"):
+
+                if is_admin:
+                    current_server_data = f_data.read_serverdata(message.guild.id)
+                    current_server_data["auto_join_read_channel"] = message.channel.id
+                    f_data.write_serverdata(message.guild.id, current_server_data)
+                    await message.channel.send("自動参加時の読み上げるチャンネルを <#{ms_channel}> に設定しました".format(ms_channel=str(message.channel.id)))
+                else:
+                    await message.channel.send("このコマンドはサーバーの管理者でないと使用できません")
 
     elif message.content.startswith(prefix + "change_voice"):
         msg_len = len(message.content)
 
-        if msg_len <= 15:
+        if msg_len <= 13 + len(prefix):
             embed = discord.Embed(title="**change_voice** コマンドの使用方法")
             embed.add_field(name="__**{prefix}change_voice models**__".format(prefix=prefix),value="modelsコマンドでモデル一覧を表示\nmodels (数字)で(数字)のモデルに変更\nex. **{prefix}change_voice models 0**".format(prefix=prefix))
             embed.add_field(name="__**{prefix}change_voice length**__".format(prefix=prefix),value="length (数字)で話す速度を変更\nex.**{prefix}change_voice length 1**".format(prefix=prefix))
@@ -106,9 +173,7 @@ async def on_message(message):
                     embed = discord.Embed(title="使用できるモデルのリスト",description="{model_list}\nex.**{prefix}change_voice models 1**".format(prefix=prefix, model_list=model_list))
                     await message.channel.send(embed=embed)
                 else:
-                    try:
-                        int(message.content[20 + len(prefix):])
-                    except ValueError:
+                    if not message.content[20 + len(prefix):].isdigit():
                         await message.channel.send("idに数字以外が含まれています `" + message.content[0:19 + len(prefix)] + "`__**`" + message.content[20 + len(prefix):] + "`**__")
                         return
                 
@@ -199,17 +264,43 @@ async def on_message(message):
                 
 @client.event
 async def on_voice_state_update(member, before, after):
+    
+    global pre_joinvoice
+
+    if member.id == client.user.id:
+        return
 
     if before.channel is not None:
         if len(before.channel.members) == 1:
             if before.channel.members[0] == client.user:
                 play_waitlist[before.channel.guild.id] = []
-                await before.channel.guild.voice_client.disconnect()
-                    
-                channel_id = listen_channel.pop(before.channel.guild.id)
-                channel = client.get_channel(channel_id)
-                await channel.send("ボイスチャンネルがBOTのみになったので自動退出しました")
+                if before.channel.guild.voice_client is not None:
+                    await before.channel.guild.voice_client.disconnect()
+                    if before.channel.guild.id in listen_channel:
+                        channel_id = listen_channel.pop(before.channel.guild.id)
+                        channel = client.get_channel(channel_id)
+                        await channel.send("ボイスチャンネルがBOTのみになったので自動退出しました")
         
+    if after.channel is not None:
+        if after.channel.guild.voice_client is None:
+            if len(after.channel.members) == 1:
+                s_data = f_data.read_serverdata(after.channel.guild.id)
+                if s_data["auto_join"]:
 
-    
+                    if s_data["auto_join_read_channel"] is None:
+                        return
+                    elif pre_joinvoice:
+                        return
+                    
+                    pre_joinvoice = True
+
+                    read_channel = client.get_channel(s_data["auto_join_read_channel"])
+
+                    listen_channel[after.channel.guild.id] = read_channel.id
+                    await asyncio.sleep(1)
+                    if after.channel is not None:
+                        await after.channel.connect()
+                        await read_channel.send("接続しました\n読み上げるチャンネル: <#" + str(read_channel.id) + ">")
+                    pre_joinvoice = False
+
 client.run(TOKEN)
