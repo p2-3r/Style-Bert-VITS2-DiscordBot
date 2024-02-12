@@ -112,7 +112,14 @@ async def on_message(message):
                 current_server_data = f_data.read_serverdata(message.guild.id)
                 embed = discord.Embed(title="**{server_name}** の現在設定".format(server_name=message.guild.name))
                 embed.add_field(name="ボイスチャンネルへの自動参加",value=str(current_server_data["auto_join"]))
-                embed.add_field(name="自動参加時に読み上げるチャンネル",value="<#" + str(current_server_data["auto_join_read_channel"]) + ">")
+                read_channel_id = str(current_server_data["auto_join_read_channel"])
+
+                if read_channel_id.isdecimal():
+                    l = "<#" + read_channel_id + ">"
+                else:
+                    l = "None"
+
+                embed.add_field(name="自動参加時に読み上げるチャンネル",value=l)
                 await message.channel.send(embed=embed)
 
             elif message.content.startswith(prefix + "server_settings auto_join"):
