@@ -1,7 +1,8 @@
-import discord
 import wave
-import asyncio
 import re
+import asyncio
+
+import discord
 
 import data as f_data
 import voice as f_voice
@@ -39,13 +40,19 @@ async def on_message(message):
         return
     
     elif message.content == f"{prefix}help":
+
+        field_dict = {f"**{prefix}ping**": "pong!",
+                      f"**{prefix}wav (content)**": "指定した内容を生成してその音声ファイルを添付したメッセージを送信します",
+                      f"**{prefix}join**": "使用した人がいるボイスチャンネルに接続します",
+                      f"**{prefix}leave**": "ボイスチャンネルから切断します",
+                      f"**{prefix}change_voice**": "使用する声を変更するためのコマンドのヘルプを表示します",
+                      f"**{prefix}server_settings**": "自動参加などサーバーに関する設定のためのヘルプを表示します"}
+        
         embed = discord.Embed(title="このBOTのヘルプ")
-        embed.add_field(name=f"**{prefix}ping**",value="pong!")
-        embed.add_field(name=f"**{prefix}wav (content)**",value="指定した内容を生成してその音声ファイルを添付したメッセージを送信します")
-        embed.add_field(name=f"**{prefix}join**",value="使用した人がいるボイスチャンネルに接続します")
-        embed.add_field(name=f"**{prefix}leave**",value="ボイスチャンネルから切断します")
-        embed.add_field(name=f"**{prefix}change_voice**",value="使用する声を変更するためのコマンドのヘルプを表示します")
-        embed.add_field(name=f"**{prefix}server_settings**",value="自動参加などサーバーに関する設定のためのヘルプを表示します")
+
+        for i, l in field_dict.items():
+            embed.add_field(name=i,value=l)
+
         await message.channel.send(embed=embed)
     
     elif message.content == f"{prefix}ping":
@@ -114,10 +121,16 @@ async def on_message(message):
     elif message.content.startswith(f"{prefix}server_settings"):
         msg_len = len(message.content)
         if msg_len <= 16 + len(prefix):
+
+            field_dict = {f"__**{prefix}server_settings status**__": "このサーバーの現在の設定を表示します。このsettingsコマンド以外はそのサーバーの管理者でないと使用できません",
+                          f"__**{prefix}server_settings auto_join**__": "このコマンドの使用でボイスチャットに誰かが参加したとき自動参加するかしないかを切り替えられます",
+                          f"__**{prefix}server_settings auto_ch**__": "自動参加時に読み上げるテキストチャンネルを設定します"}
+
             embed = discord.Embed(title="**settings** コマンドの使用方法")
-            embed.add_field(name=f"__**{prefix}server_settings status**__",value="このサーバーの現在の設定を表示します。このsettingsコマンド以外はそのサーバーの管理者でないと使用できません")
-            embed.add_field(name=f"__**{prefix}server_settings auto_join**__",value="このコマンドの使用でボイスチャットに誰かが参加したとき自動参加するかしないかを切り替えられます")
-            embed.add_field(name=f"__**{prefix}server_settings auto_ch**__",value="自動参加時に読み上げるテキストチャンネルを設定します")
+
+            for i, l in field_dict.items():
+                embed.add_field(name=i,value=l)
+
             await message.channel.send(embed=embed)
         else:
             is_admin = message.author.guild_permissions.administrator
@@ -175,9 +188,15 @@ async def on_message(message):
         msg_len = len(message.content)
 
         if msg_len <= 13 + len(prefix):
+
+            field_dict = {f"__**{prefix}change_voice models**__": f"modelsコマンドでモデル一覧を表示\nmodels (数字)で(数字)のモデルに変更\nex. **{prefix}change_voice models 0**",
+                          f"__**{prefix}change_voice length**__": f"length (数字)で話す速度を変更\nex.**{prefix}change_voice length 1**"}
+
             embed = discord.Embed(title="**change_voice** コマンドの使用方法")
-            embed.add_field(name=f"__**{prefix}change_voice models**__",value=f"modelsコマンドでモデル一覧を表示\nmodels (数字)で(数字)のモデルに変更\nex. **{prefix}change_voice models 0**")
-            embed.add_field(name=f"__**{prefix}change_voice length**__",value=f"length (数字)で話す速度を変更\nex.**{prefix}change_voice length 1**")
+
+            for i, l in field_dict.items():
+                embed.add_field(name=i,value=l)
+                
             await message.channel.send(embed=embed)
 
         else:
@@ -242,9 +261,12 @@ async def on_message(message):
 
         if message.channel.id == listen_channel[message.guild.id]:
 
-            message.content = re.sub('<:.+:.+>', '', message.content)
-            message.content = re.sub("https?://[\w/:%#\$&\?\(\)~\.=\+\-]+", '、url、', message.content)
-            message.content = re.sub("```(.|\n)+```", "、コードブロック、", message.content)
+            replace_dict = {'<:.+:.+>': '',
+                            "https?://[\w/:%#\$&\?\(\)~\.=\+\-]+": '、url、',
+                            "```(.|\n)+```": "、コードブロック、"}
+            
+            for before, after in replace_dict.items():
+                message.content = re.sub(before, after, message.content)
 
             if message.content != "":
 
