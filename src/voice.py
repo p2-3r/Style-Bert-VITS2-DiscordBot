@@ -52,9 +52,9 @@ def create_voice(mscontent, user_id):
     wav = response.content
 
     path = "mscontent.wav"
-    wr = open(path, "wb")
-    wr.write(wav)
-    wr.close()
+    
+    with open(path, "wb") as wr:
+        wr.write(wav)
 
     return path
 

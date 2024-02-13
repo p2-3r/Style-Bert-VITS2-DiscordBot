@@ -15,16 +15,16 @@ def read_userdata(user_id):
     if type(user_id) == int:
         user_id = str(user_id)
     
-    f = open("data.json" , "r")
-    data = json.load(f)
+    data = read()
+
     if user_id in data["user_data"]:
         return data["user_data"][user_id]
     else:
         return None
 
 def create_userdata(user_id):
-    f = open("data.json" , "r")
-    data = json.load(f)
+    
+    data = read()
 
     data["user_data"][user_id] = {"model_id": "0",
                                   "speaker_id": "0",
@@ -38,22 +38,19 @@ def create_userdata(user_id):
                                   "style": "Neutral",
                                   "style_weight": "5"}
     
-    with open('data.json', 'w') as f:
-        json.dump(data, f, indent=4)
+    write(data)
     
 def write_userdata(user_id, user_data):
 
     if type(user_id) == int:
         user_id = str(user_id)
 
-    f = open("data.json" , "r")
-    data = json.load(f)
+    data = read()
 
     if user_id in data["user_data"]:
         data["user_data"][user_id] = user_data
 
-    with open('data.json', 'w') as f:
-        json.dump(data, f, indent=4)
+    write(data)
 
 def read_serverdata(server_id):
     data_json = read()

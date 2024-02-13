@@ -12,17 +12,8 @@ class Color:
     YELLOW = '\033[33m'
     END = '\033[0m'
 
-    def printred(self, content):
-        return self.RED + content + self.END
-    
-    def printblue(self, content):
-        return self.BLUE + content + self.END
-
-    def printgreen(self, content):
-        return self.GREEN + content + self.END
-    
-    def printyellow(self, content):
-        return self.YELLOW + content + self.END
+    def print(self, content, color):
+        return color + content + self.END
     
 color = Color()
 
@@ -32,24 +23,26 @@ class Printinfo:
 
     def time(self):
         l = f'{self.now.hour}:{self.now.minute}:{self.now.second}'
-        j = color.printgreen(l)
+        j = color.print(l, color.GREEN)
         return j
 
     def info(self, content):
-        print(f"{color.printblue('INFO')}|{Printinfo().time()}|{content}")
+        print(f"{color.print('INFO', color.BLUE)}|{Printinfo().time()}|{content}")
 
     def error(self, content):
-        print(f"{color.printred('ERROR')}|{Printinfo().time()}|{content}")
+        print(f"{color.print('ERROR', color.RED)}|{Printinfo().time()}|{content}")
 
     def complete(self, content):
-        print(f"{color.printyellow('COMPLETE')}|{Printinfo().time()}|{content}")
+        print(f"{color.print('COMPLETE', color.YELLOW)}|{Printinfo().time()}|{content}")
 
 printinfo = Printinfo()
 
 def exist_and_delete(file_path):
     if os.path.exists(file_path):
+
         if os.path.isfile(file_path):
             os.remove(file_path)
+
         if os.path.isdir(file_path):
             shutil.rmtree(file_path)
 
@@ -65,11 +58,14 @@ try:
     for i in deletelist:
         if not i in ["data.json","update (need git).bat","update.py","requirements.txt","venv","Discord-ReadTextBot-for-Style-Bert-VITS2-API",".git"]:
             exist_and_delete(i)
-            
-    exist_and_rename("data.json", "data_old.json")
-    exist_and_rename("update (need git).bat","update_old.bat")
-    exist_and_rename("update.py","update_old.py")
-    exist_and_rename("requirements.txt","requirements_old.txt")
+    
+    rename_dict = {"data.json": "data_old.json",
+                   "update (need git).bat": "update_old.bat",
+                   "update.py": "update_old.py",
+                   "requirements.txt": "requirements_old.txt"}
+
+    for before, after in rename_dict.items():
+        exist_and_rename(before, after)
 
     printinfo.info("Moving new files...")
 
