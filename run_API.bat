@@ -7,16 +7,16 @@ cd %PATH%
 if exist "./venv/Scripts/activate" (
     call "./venv/Scripts/activate"
 ) else (
-    echo ERROR: Could not start Style-Bert-VITS2 venv
+    echo [31mERROR[0m: Could not start Style-Bert-VITS2 venv
     pause
     exit
 )
 
 if exist "server_fastapi.py" (
-    echo Running server_fastapi.py...
+    echo [34mINFO[0m^|[32m%time:~0,2%:%time:~3,2%:%time:~6,2%[0m^|Running server_fastapi.py...
     python server_fastapi.py
 ) else (
-    echo ERROR: Not found server_fastapi.py
+    echo [31mERROR[0m: Not found server_fastapi.py
     pause
     exit
 )
