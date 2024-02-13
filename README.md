@@ -31,6 +31,8 @@ Style-Bert-VITS2のAPIを使ったDiscordの読み上げボットです
 
 * Style-Bert-VITS2
 
+* ffmpeg
+
 * ( Git )
 
 ## 起動準備
