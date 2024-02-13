@@ -44,21 +44,8 @@ def create_voice(mscontent, user_id):
         style = "Neutral"
         style_weight = "5"
 
-    response_text = "http://" + url + ":" + port + "/voice?" + \
-                    "text=" + mscontent + \
-                    "&encoding=utf-8" + \
-                    "&model_id=" + model_id + \
-                    "&speaker_id=" + speaker_id + \
-                    "&sdp_ratio=" + sdp_ratio + \
-                    "&noise=" + noise + \
-                    "&noisew=" + noisew + \
-                    "&length=" + length + \
-                    "&language=JP" + \
-                    "&auto_split=true" + \
-                    "&split_interval=" + split_interval + \
-                    "&assist_text_weight=" + assist_text_weight + \
-                    "&style=" + style + \
-                    "&style_weight=" + style_weight
+    
+    response_text = f"http://{url}:{port}/voice?text={mscontent}&encoding=utf-8&model_id={model_id}&speaker_id={speaker_id}&sdp_ratio={sdp_ratio}&noise={noise}&noisew={noisew}&length={length}&language=JP&auto_split=true&split_interval={split_interval}&assist_text_weight={assist_text_weight}&style={style}&style_weight={style_weight}"
     
     response = requests.get(response_text)
 
@@ -72,7 +59,7 @@ def create_voice(mscontent, user_id):
     return path
 
 def get_model():
-    response = requests.get("http://" + url + ":" + port + "/models/info")
+    response = requests.get(f"http://{url}:{port}/models/info")
     model_data = json.loads(response.content)
 
     print_text = ""
@@ -89,10 +76,10 @@ def get_model():
                 l = l + ", " + model_names[str(i2)]
         
         if i == 0:
-            print_text = str(i) + ": " + l
+            print_text = f"{str(i)}: {l}"
             print_dict[str(i)] = l
         else:
-            print_text = print_text + "\n" + str(i) + ": " + l
+            print_text = f"{print_text}\n{str(i)}: {l}"
             print_dict[str(i)] = l
 
     
