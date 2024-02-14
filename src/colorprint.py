@@ -10,7 +10,7 @@ class Color:
 
     def print(self, content, color):
         return color + content + self.END
-    
+
 color = Color()
 
 class Printinfo:

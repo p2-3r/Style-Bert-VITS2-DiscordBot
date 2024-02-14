@@ -3,6 +3,7 @@ import re
 import asyncio
 
 import discord
+import discord.app_commands
 
 import data as f_data
 import voice as f_voice
@@ -18,12 +19,258 @@ pre_joinvoice = False
 
 intents=discord.Intents.all()
 client = discord.Client(intents=intents)
+tree = discord.app_commands.CommandTree(client)
+
+#SLASHCOMMANDS---------------------------------------------
+
+@tree.command(
+    name="ping",
+    description="pong!"
+)
+async def ping(ctx:discord.Interaction):
+    await ctx.response.send_message("pong!", ephemeral=True)
+
+@tree.command(
+    name="help",
+    description="helpを表示します。"
+)
+
+@discord.app_commands.guild_only
+
+async def help(ctx:discord.Interaction):
+    field_dict = {f"**{prefix}ping**": "pong!",
+                      f"**{prefix}wav (content)**": "指定した内容を生成してその音声ファイルを添付したメッセージを送信します",
+                      f"**{prefix}join**": "使用した人がいるボイスチャンネルに接続します",
+                      f"**{prefix}leave**": "ボイスチャンネルから切断します",
+                      f"**{prefix}change_voice**": "使用する声を変更するためのコマンドのヘルプを表示します",
+                      f"**{prefix}server_settings**": "自動参加などサーバーに関する設定のためのヘルプを表示します"}
+
+    embed = discord.Embed(title="このBOTのヘルプ")
+
+    for i, l in field_dict.items():
+        embed.add_field(name=i,value=l)
+
+    await ctx.response.send_message(embed=embed)
+
+@tree.command(
+    name="wav",
+    description="指定した内容の音声を生成して添付します。"
+)
+
+@discord.app_commands.guild_only
+
+async def wav(ctx:discord.Interaction, text:str):
+    path = f_voice.create_voice(text, ctx.user.id)
+    await ctx.response.send_message(file=discord.File(path))
+
+@tree.command(
+    name="join",
+    description="使用するとあなたが現在いるボイスチャンネルに参加します。"
+)
+
+@discord.app_commands.guild_only
+
+async def join(ctx:discord.Interaction):
+    if ctx.user.voice is None:
+        await ctx.response.send_message("ボイスチャンネルに接続してから使用してください", ephemeral=True)
+        return
+    elif ctx.guild.voice_client is None:
+        listen_channel[ctx.guild.id] = ctx.channel.id
+        await ctx.user.voice.channel.connect()
+        await ctx.response.send_message(f"接続しました\n読み上げるチャンネル: <#{str(ctx.channel.id)}>")
+
+        try:
+            play_waitlist[ctx.guild.id].append({"content": "接続しました", "userid": ctx.user.id})
+        except KeyError:
+            play_waitlist[ctx.guild.id] = []
+            play_waitlist[ctx.guild.id].append({"content": "接続しました", "userid": ctx.user.id})
+
+        playsound_list = play_waitlist[ctx.guild.id]
+
+        if len(playsound_list) == 1:
+            while playsound_list:
+
+                path = f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"])
+
+                try:
+                    ctx.guild.voice_client.play(discord.FFmpegPCMAudio(path))
+                except discord.errors.ClientException:
+                    playsound_list = []
+                    return
+
+                with wave.open(path, 'rb') as f:
+                    fr = f.getframerate()
+                    fn = f.getnframes()
+
+                await asyncio.sleep(1.0 * (fn/fr) + 0.25)
+                playsound_list.pop(0)
+
+    elif ctx.guild.voice_client is not None:
+        await ctx.response.send_message("すでにボイスチャンネルに接続しています", ephemeral=True)
+        return
+
+@tree.command(
+    name="leave",
+    description="ボイスチャンネルから退出します。"
+)
+
+@discord.app_commands.guild_only
+
+async def leave(ctx:discord.Interaction):
+
+    if ctx.guild.voice_client is None:
+        await ctx.response.send_message("接続していません", ephemeral=True)
+        return
+    if ctx.channel.guild.voice_client is not None:
+        listen_channel.pop(ctx.guild.id)
+        play_waitlist[ctx.guild.id] = []
+        await ctx.guild.voice_client.disconnect()
+        await ctx.response.send_message("退出しました")
+
+@tree.command(
+    name="server_settings_status",
+    description="現在のサーバーの設定を表示します。"
+)
+
+@discord.app_commands.guild_only
+
+async def server_settings_status(ctx:discord.Interaction):
+    current_server_data = f_data.read_serverdata(ctx.guild.id)
+    embed = discord.Embed(title=f"**{ctx.guild.name}** の現在設定")
+    embed.add_field(name="ボイスチャンネルへの自動参加",value=str(current_server_data["auto_join"]))
+    read_channel_id = str(current_server_data["auto_join_read_channel"])
+
+    if read_channel_id.isdecimal():
+        l = f"<#{read_channel_id}>"
+    else:
+        l = "None"
+
+    embed.add_field(name="自動参加時に読み上げるチャンネル",value=l)
+    await ctx.response.send_message(embed=embed)
+
+@tree.command(
+    name="server_settings_auto_join",
+    description="自動参加の設定を切り替えます。"
+)
+
+@discord.app_commands.guild_only
+
+async def server_settings_auto_join(ctx:discord.Interaction):
+    if ctx.user.guild_permissions.administrator:
+        current_server_data = f_data.read_serverdata(ctx.guild.id)
+
+        if current_server_data["auto_join"] == False:
+            current_server_data["auto_join"] = True
+            p_ms = ""
+            if current_server_data["auto_join_read_channel"] is None:
+                current_server_data["auto_join_read_channel"] = ctx.channel.id
+                p_ms = f"\n自動参加時の読み上げるチャンネルを <#{str(ctx.channel.id)}> に設定しました\n変更したい場合は `{prefix}server_settings auto_ch` コマンドを使用してください"
+
+            ml = "ON"
+
+        elif current_server_data["auto_join"] == True:
+            current_server_data["auto_join"] = False
+            p_ms = ""
+            ml = "OFF"
+
+        f_data.write_serverdata(ctx.guild.id, current_server_data)
+
+        await ctx.response.send_message(f"自動参加機能を**{ml}**にしました{p_ms}")
+    else:
+        await ctx.response.send_message("このコマンドはサーバーの管理者でないと使用できません")
+
+
+@tree.command(
+    name="server_settings_auto_ch",
+    description="自動参加時に読み上げるチャンネルを設定します。"
+)
+
+@discord.app_commands.guild_only
+
+async def server_settings_auto_ch(ctx:discord.Interaction):
+    if ctx.user.guild_permissions.administrator:
+        current_server_data = f_data.read_serverdata(ctx.guild.id)
+        current_server_data["auto_join_read_channel"] = ctx.channel.id
+        f_data.write_serverdata(ctx.guild.id, current_server_data)
+        await ctx.response.send_message(f"自動参加時の読み上げるチャンネルを <#{str(ctx.channel.id)}> に設定しました")
+    else:
+        await ctx.response.send_message("このコマンドはサーバーの管理者でないと使用できません")
+
+@tree.command(
+    name="change_voice_models_list",
+    description="使用できる声の一覧を表示します。"
+)
+
+@discord.app_commands.guild_only
+
+async def change_voice_models_list(ctx:discord.Interaction):
+    model_list = f_voice.get_model()[1]
+    embed = discord.Embed(title="使用できるモデルのリスト",description=f"{model_list}\nex.**{prefix}change_voice models 1**")
+    await ctx.response.send_message(embed=embed)
+
+@tree.command(
+    name="change_voice_models",
+    description="使用する声を変更します。"
+)
+
+@discord.app_commands.guild_only
+
+async def change_voice_models(ctx:discord.Interaction, model_number:int):
+    database = f_data.read()
+    model_number = str(model_number)
+    if not str(ctx.user.id) in database["user_data"]:
+        f_data.create_userdata(ctx.user.id)
+        database = f_data.read()
+
+    if model_number in f_voice.get_model()[0]:
+        database["user_data"][str(ctx.user.id)]["model_id"] = model_number
+        f_data.write(database)
+
+        await ctx.response.send_message(f"使用するモデルを **{f_voice.get_model()[0][model_number]}** に変更しました")
+    else:
+        await ctx.response.send_message(f"モデル: **{model_number}** は存在しません")
+        return
+
+@tree.command(
+    name="change_voice_length",
+    description="読み上げ速度を変更します。"
+)
+
+@discord.app_commands.guild_only
+
+async def change_voice_length(ctx:discord.Interaction, length:float):
+
+    if length <= 0.1:
+        length = 0.1
+    elif length >= 5:
+        length = 5
+
+    length = str(length)
+
+    database = f_data.read()
+    if not str(ctx.user.id) in database["user_data"]:
+        f_data.create_userdata(ctx.user.id)
+        database = f_data.read()
+
+    database["user_data"][str(ctx.user.id)]["length"] = length
+    f_data.write(database)
+
+    await ctx.response.send_message(f"lengthを **{length}** に変更しました")
+
+#SLASHCOMMANDS---------------------------------------------
 
 @client.event
 async def on_ready():
     await client.change_presence(activity=discord.Game(name=f"{prefix}helpでhelpを表示"))
+
     f_print.printinfo.complete("Bot launch completed.")
-    
+
+    f_print.printinfo.info("Sync SlashCommand...")
+
+    await tree.sync()
+
+    f_print.printinfo.complete("Sync completed.")
+
 
 @client.event
 async def on_message(message):
@@ -33,12 +280,12 @@ async def on_message(message):
 
     if message.author.bot:
         return
-    
+
     elif message.channel.guild == None:
         if message.content.startswith(prefix):
             await message.channel.send("このBOTの機能はDMでは利用できません")
         return
-    
+
     elif message.content == f"{prefix}help":
 
         field_dict = {f"**{prefix}ping**": "pong!",
@@ -47,14 +294,14 @@ async def on_message(message):
                       f"**{prefix}leave**": "ボイスチャンネルから切断します",
                       f"**{prefix}change_voice**": "使用する声を変更するためのコマンドのヘルプを表示します",
                       f"**{prefix}server_settings**": "自動参加などサーバーに関する設定のためのヘルプを表示します"}
-        
+
         embed = discord.Embed(title="このBOTのヘルプ")
 
         for i, l in field_dict.items():
             embed.add_field(name=i,value=l)
 
         await message.channel.send(embed=embed)
-    
+
     elif message.content == f"{prefix}ping":
         await message.channel.send("pong!")
 
@@ -68,7 +315,6 @@ async def on_message(message):
             if printcontent != "":
                 path = f_voice.create_voice(printcontent, message.author.id)
                 await message.channel.send(file=discord.File(path))
-
 
     elif message.content == f'{prefix}join':
         if message.author.voice is None:
@@ -86,9 +332,10 @@ async def on_message(message):
                 play_waitlist[message.guild.id].append({"content": "接続しました", "userid": message.author.id})
 
             playsound_list = play_waitlist[message.guild.id]
-                
-            if len(playsound_list) == 1: 
-                while playsound_list != []:
+
+            if len(playsound_list) == 1:
+                while playsound_list:
+
                     path = f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"])
 
                     try:
@@ -103,7 +350,7 @@ async def on_message(message):
 
                     await asyncio.sleep(1.0 * (fn/fr) + 0.25)
                     playsound_list.pop(0)
-        
+
         elif message.guild.voice_client is not None:
             await message.channel.send("すでにボイスチャンネルに接続しています")
             return
@@ -167,7 +414,7 @@ async def on_message(message):
                         current_server_data["auto_join"] = False
                         p_ms = ""
                         ml = "OFF"
-                        
+
                     f_data.write_serverdata(message.guild.id, current_server_data)
 
                     await message.channel.send(f"自動参加機能を**{ml}**にしました{p_ms}")
@@ -196,7 +443,7 @@ async def on_message(message):
 
             for i, l in field_dict.items():
                 embed.add_field(name=i,value=l)
-                
+
             await message.channel.send(embed=embed)
 
         else:
@@ -209,7 +456,7 @@ async def on_message(message):
                     if not message.content[20 + len(prefix):].isdigit():
                         await message.channel.send(f"idに数字以外が含まれています `{message.content[0:19 + len(prefix)]}`__**`{message.content[20 + len(prefix):]}`**__")
                         return
-                
+
                     input_id = f_data.fullnum2halfnum(message.content[20 + len(prefix):])
 
                     database = f_data.read()
@@ -225,7 +472,7 @@ async def on_message(message):
                     else:
                         await message.channel.send(f"モデル: **{input_id}** は存在しません")
                         return
-                    
+
             if message.content.startswith(f"{prefix}change_voice length"):
                 if msg_len <= 20 + len(prefix):
                     embed = discord.Embed(title="使用方法",description=f"{prefix}change_voice length (数字)\nex.**{prefix}change_voice length 1**")
@@ -239,7 +486,7 @@ async def on_message(message):
                             input_length = "5"
                         else:
                             input_length = f_data.fullnum2halfnum(message.content[20 + len(prefix):])
-                        
+
                     except ValueError:
                         await message.channel.send(f"lengthに数字以外が含まれています `{message.content[0:19 + len(prefix)]}`__**`{message.content[20 + len(prefix):]}`**__")
                         return
@@ -264,7 +511,7 @@ async def on_message(message):
             replace_dict = {'<:.+:.+>': '',
                             "https?://[\w/:%#\$&\?\(\)~\.=\+\-]+": '、url、',
                             "```(.|\n)+```": "、コードブロック、"}
-            
+
             for before, after in replace_dict.items():
                 message.content = re.sub(before, after, message.content)
 
@@ -280,9 +527,9 @@ async def on_message(message):
                     play_waitlist[message.guild.id].append({"content": message.content, "userid": message.author.id})
 
                 playsound_list = play_waitlist[message.guild.id]
-                
-                if len(playsound_list) == 1: 
-                    while playsound_list != []:
+
+                if len(playsound_list) == 1:
+                    while playsound_list:
                         path = f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"])
 
                         try:
@@ -297,10 +544,10 @@ async def on_message(message):
 
                         await asyncio.sleep(1.0 * (fn/fr) + 0.25)
                         playsound_list.pop(0)
-                
+
 @client.event
 async def on_voice_state_update(member, before, after):
-    
+
     global pre_joinvoice
 
     if member.id == client.user.id:
@@ -316,7 +563,7 @@ async def on_voice_state_update(member, before, after):
                         channel_id = listen_channel.pop(before.channel.guild.id)
                         channel = client.get_channel(channel_id)
                         await channel.send("ボイスチャンネルがBOTのみになったので自動退出しました")
-        
+
     if after.channel is not None:
         if after.channel.guild.voice_client is None:
             if len(after.channel.members) == 1:
@@ -327,7 +574,7 @@ async def on_voice_state_update(member, before, after):
                         return
                     elif pre_joinvoice:
                         return
-                    
+
                     pre_joinvoice = True
 
                     read_channel = client.get_channel(s_data["auto_join_read_channel"])

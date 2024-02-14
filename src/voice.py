@@ -10,7 +10,7 @@ default_model = f_data.read()["settings"]["default_model"]
 
 
 def create_voice(mscontent, user_id):
-    
+
     if type(user_id) == int:
         user_id = str(user_id)
 
@@ -44,15 +44,15 @@ def create_voice(mscontent, user_id):
         style = "Neutral"
         style_weight = "5"
 
-    
+
     response_text = f"http://{url}:{port}/voice?text={mscontent}&encoding=utf-8&model_id={model_id}&speaker_id={speaker_id}&sdp_ratio={sdp_ratio}&noise={noise}&noisew={noisew}&length={length}&language=JP&auto_split=true&split_interval={split_interval}&assist_text_weight={assist_text_weight}&style={style}&style_weight={style_weight}"
-    
+
     response = requests.get(response_text)
 
     wav = response.content
 
     path = "mscontent.wav"
-    
+
     with open(path, "wb") as wr:
         wr.write(wav)
 
@@ -74,7 +74,7 @@ def get_model():
                 l = model_names[str(i2)]
             else:
                 l = l + ", " + model_names[str(i2)]
-        
+
         if i == 0:
             print_text = f"{str(i)}: {l}"
             print_dict[str(i)] = l
@@ -82,7 +82,7 @@ def get_model():
             print_text = f"{print_text}\n{str(i)}: {l}"
             print_dict[str(i)] = l
 
-    
+
 
     return [print_dict, print_text]
 

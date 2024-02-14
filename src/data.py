@@ -14,7 +14,7 @@ def read_userdata(user_id):
 
     if type(user_id) == int:
         user_id = str(user_id)
-    
+
     data = read()
 
     if user_id in data["user_data"]:
@@ -23,7 +23,7 @@ def read_userdata(user_id):
         return None
 
 def create_userdata(user_id):
-    
+
     data = read()
 
     data["user_data"][user_id] = {"model_id": "0",
@@ -37,9 +37,9 @@ def create_userdata(user_id):
                                   "assist_text_weight": "1",
                                   "style": "Neutral",
                                   "style_weight": "5"}
-    
+
     write(data)
-    
+
 def write_userdata(user_id, user_data):
 
     if type(user_id) == int:
@@ -66,7 +66,7 @@ def read_serverdata(server_id):
 
     servers_data_template = {"auto_join": False,
                              "auto_join_read_channel": None}
-         
+
     try:
         current_server_data = servers_data[server_id]
     except KeyError:
@@ -85,7 +85,7 @@ def read_serverdata(server_id):
 
         if t_l == True:
             write(data_json)
-    
+
     return current_server_data
 
 def write_serverdata(server_id,server_data):
@@ -103,7 +103,7 @@ def fullnum2halfnum(input):
     fullnum = "０１２３４５６７８９．"
     halfnum = "0123456789."
 
-    map = str.maketrans(fullnum, halfnum) 
+    map = str.maketrans(fullnum, halfnum)
     l = input.translate(map)
 
     return l
