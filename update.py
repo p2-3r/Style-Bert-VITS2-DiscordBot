@@ -14,7 +14,7 @@ class Color:
 
     def print(self, content, color):
         return color + content + self.END
-    
+
 color = Color()
 
 class Printinfo:
@@ -58,7 +58,7 @@ try:
     for i in deletelist:
         if not i in ["data.json","update (need git).bat","update.py","requirements.txt","venv","Discord-ReadTextBot-for-Style-Bert-VITS2-API",".git"]:
             exist_and_delete(i)
-    
+
     rename_dict = {"data.json": "data_old.json",
                    "update (need git).bat": "update_old.bat",
                    "update.py": "update_old.py",
@@ -76,7 +76,7 @@ try:
     exist_and_delete("Discord-ReadTextBot-for-Style-Bert-VITS2-API")
 
     if os.path.exists("data.json"):
-        
+
         printinfo.info("Moving 'data.json'...")
 
         newjson = json.load(open('data.json', 'r', encoding="UTF-8"))
@@ -98,7 +98,7 @@ try:
             req_old = f.read()
         with open("requirements.txt", "r", encoding="cp932") as f:
             req_new = f.read()
-        
+
         if not req_old == req_new:
             exist_and_delete("venv")
             printinfo.info("Deleted venv because there was a change in the using library.")
