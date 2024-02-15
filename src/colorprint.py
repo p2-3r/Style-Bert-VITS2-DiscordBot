@@ -1,5 +1,8 @@
 import datetime
 
+def now():
+    return datetime.datetime.now()
+
 class Color:
 
     RED = '\033[31m'
@@ -15,10 +18,8 @@ color = Color()
 
 class Printinfo:
 
-    now = datetime.datetime.now()
-
     def time(self):
-        l = f'{self.now.hour}:{self.now.minute}:{self.now.second}'
+        l = f'{now().hour:02}:{now().minute:02}:{now().second:02}'
         j = color.print(l, color.GREEN)
         return j
 

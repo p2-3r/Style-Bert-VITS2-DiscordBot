@@ -4,6 +4,9 @@ import json
 import time
 import datetime
 
+def now():
+    return datetime.datetime.now()
+
 class Color:
 
     RED = '[31m'
@@ -19,10 +22,8 @@ color = Color()
 
 class Printinfo:
 
-    now = datetime.datetime.now()
-
     def time(self):
-        l = f'{self.now.hour}:{self.now.minute}:{self.now.second}'
+        l = f'{now().hour}:{now().minute}:{now().second}'
         j = color.print(l, color.GREEN)
         return j
 
