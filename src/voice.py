@@ -86,3 +86,7 @@ def get_model():
 
     return [print_dict, print_text]
 
+def get_status():
+    response = requests.get(f"http://{url}:{port}/status")
+    status = json.loads(response.content)
+    return status
