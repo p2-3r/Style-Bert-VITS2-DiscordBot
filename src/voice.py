@@ -1,6 +1,7 @@
 import requests
 import json
 import re
+import os
 
 import data as f_data
 
@@ -9,7 +10,7 @@ port = f_data.read()["settings"]["port"]
 default_model = f_data.read()["settings"]["default_model"]
 
 
-def create_voice(mscontent, user_id):
+def create_voice(mscontent: str, user_id: int, server_id: int):
 
     if type(user_id) == int:
         user_id = str(user_id)
@@ -51,10 +52,15 @@ def create_voice(mscontent, user_id):
 
     wav = response.content
 
-    path = "mscontent.wav"
+    path = f"./temp/temp_{server_id}.wav"
 
-    with open(path, "wb") as wr:
-        wr.write(wav)
+    try:
+        with open(path, "wb") as wr:
+            wr.write(wav)
+    except FileNotFoundError:
+        os.makedirs("./temp/", exist_ok=True)
+        with open(path, "wb") as wr:
+            wr.write(wav)
 
     return path
 

@@ -36,10 +36,10 @@ class Help():
         return self
 
 class Wav():
-    def main(self, content: str, user_id:int):
+    def main(self, content: str, user_id :int, server_id: int):
         self.content = f"「{content}」"
         try:
-            self.file = f_voice.create_voice(content, user_id)
+            self.file = f_voice.create_voice(content, user_id, server_id)
         except requests.exceptions.ConnectionError:
             f_print.printinfo.error("Audio could not be generated because the API was not activated.")
 

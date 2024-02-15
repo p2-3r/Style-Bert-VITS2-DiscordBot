@@ -1,6 +1,7 @@
 import wave
 import re
 import asyncio
+import pickle
 
 import discord
 import discord.app_commands
@@ -58,7 +59,7 @@ if __name__ == '__main__':
         await ctx.response.defer()
 
         try:
-            reply = f_com.wav.main(text, ctx.user.id)
+            reply = f_com.wav.main(text, ctx.user.id, ctx.guild.id)
             await ctx.followup.send(reply.content, file=discord.File(reply.file))
 
         except AttributeError:
@@ -93,17 +94,17 @@ if __name__ == '__main__':
                     return
 
             try:
-                play_waitlist[ctx.guild.id].append({"content": "接続しました", "userid": ctx.user.id})
+                play_waitlist[ctx.guild.id].append({"content": "接続しました", "userid": ctx.user.id, "serverid": ctx.guild.id})
             except KeyError:
                 play_waitlist[ctx.guild.id] = []
-                play_waitlist[ctx.guild.id].append({"content": "接続しました", "userid": ctx.user.id})
+                play_waitlist[ctx.guild.id].append({"content": "接続しました", "userid": ctx.user.id, "serverid": ctx.guild.id})
 
             playsound_list = play_waitlist[ctx.guild.id]
 
             if len(playsound_list) == 1:
                 while playsound_list:
 
-                    path = f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"])
+                    path = f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"], playsound_list[0]["serverid"])
                     ctx.guild.voice_client.play(discord.FFmpegPCMAudio(path))
 
                     with wave.open(path, 'rb') as f:
@@ -250,7 +251,7 @@ if __name__ == '__main__':
             else:
                 printcontent = message.content[4 + len(prefix):]
                 if printcontent != "":
-                    reply = f_com.wav.main(printcontent, message.author.id)
+                    reply = f_com.wav.main(printcontent, message.author.id, message.guild.id)
                     try:
                         await message.channel.send(reply.content, file=discord.File(reply.file))
                     except AttributeError:
@@ -278,17 +279,17 @@ if __name__ == '__main__':
                         return
 
                 try:
-                    play_waitlist[message.guild.id].append({"content": "接続しました", "userid": message.author.id})
+                    play_waitlist[message.guild.id].append({"content": "接続しました", "userid": message.author.id, "serverid": message.guild.id})
                 except KeyError:
                     play_waitlist[message.guild.id] = []
-                    play_waitlist[message.guild.id].append({"content": "接続しました", "userid": message.author.id})
+                    play_waitlist[message.guild.id].append({"content": "接続しました", "userid": message.author.id, "serverid": message.guild.id})
 
                 playsound_list = play_waitlist[message.guild.id]
 
                 if len(playsound_list) == 1:
                     while playsound_list:
 
-                        path = f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"])
+                        path = f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"], playsound_list[0]["serverid"])
 
                         try:
                             message.guild.voice_client.play(discord.FFmpegPCMAudio(path))
@@ -388,10 +389,10 @@ if __name__ == '__main__':
                         message.content = message.content[:read_limit] + "、以下略"
 
                     try:
-                        play_waitlist[message.guild.id].append({"content": message.content, "userid": message.author.id})
+                        play_waitlist[message.guild.id].append({"content": message.content, "userid": message.author.id, "serverid": message.guild.id})
                     except KeyError:
                         play_waitlist[message.guild.id] = []
-                        play_waitlist[message.guild.id].append({"content": message.content, "userid": message.author.id})
+                        play_waitlist[message.guild.id].append({"content": message.content, "userid": message.author.id, "serverid": message.guild.id})
 
                     playsound_list = play_waitlist[message.guild.id]
 
@@ -399,7 +400,7 @@ if __name__ == '__main__':
                         while playsound_list:
 
                             try:
-                                path = f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"])
+                                path = f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"], playsound_list[0]["serverid"])
                             except requests.exceptions.ConnectionError:
                                 f_print.printinfo.error("Audio could not be generated because the API was not activated.")
                                 return
