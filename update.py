@@ -23,7 +23,7 @@ color = Color()
 class Printinfo:
 
     def time(self):
-        l = f'{now().hour}:{now().minute}:{now().second}'
+        l = f'{now().hour:02}:{now().minute:02}:{now().second:02}'
         j = color.print(l, color.GREEN)
         return j
 
