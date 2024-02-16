@@ -1,24 +1,19 @@
 import wave
 import re
 import asyncio
-import pickle
 
 import discord
 import discord.app_commands
-import requests
+import aiohttp
 
 import data as f_data
 import voice as f_voice
 import colorprint as f_print
 import commands as f_com
+import global_
 
+prefix = global_.prefix
 TOKEN = f_data.read()["settings"]["bot_token"]
-
-listen_channel = {}
-play_waitlist = {}
-prefix = f_data.read()["settings"]["prefix"]
-read_limit = f_data.read()["settings"]["read_limit"]
-pre_joinvoice = False
 
 intents=discord.Intents.all()
 client = discord.Client(intents=intents)
@@ -33,8 +28,8 @@ if __name__ == '__main__':
         description="pong!"
     )
     async def ping(ctx:discord.Interaction):
-        reply = f_com.ping.main()
-        await ctx.response.send_message(reply.content, ephemeral=True)
+        reply = f_com.ping()
+        await ctx.response.send_message(reply, ephemeral=True)
 
     @tree.command(
         name="help",
@@ -44,8 +39,8 @@ if __name__ == '__main__':
     @discord.app_commands.guild_only
 
     async def help(ctx:discord.Interaction):
-        reply = f_com.help.main()
-        await ctx.response.send_message(embed=reply.embed)
+        reply = f_com.help()
+        await ctx.response.send_message(embed=reply)
 
     @tree.command(
         name="wav",
@@ -59,7 +54,7 @@ if __name__ == '__main__':
         await ctx.response.defer()
 
         try:
-            reply = f_com.wav.main(text, ctx.user.id, ctx.guild.id)
+            reply = await f_com.wav.main(text, ctx.user.id, ctx.guild.id)
             await ctx.followup.send(reply.content, file=discord.File(reply.file))
 
         except AttributeError:
@@ -73,50 +68,12 @@ if __name__ == '__main__':
     @discord.app_commands.guild_only
 
     async def join(ctx:discord.Interaction):
-        if ctx.user.voice is None:
-            await ctx.response.send_message("ボイスチャンネルに接続してから使用してください", ephemeral=True)
-            return
-        elif ctx.guild.voice_client is None:
-            listen_channel[ctx.guild.id] = ctx.channel.id
-            await ctx.user.voice.channel.connect()
-            await ctx.response.send_message(f"接続しました\n読み上げるチャンネル: <#{str(ctx.channel.id)}>")
-
-            try:
-                f_voice.get_status()
-            except requests.exceptions.ConnectionError:
-                await ctx.followup.send("**現在、APIが起動していないため音声を生成することができません。**")
-                f_print.printinfo.error("Audio could not be generated because the API was not activated.")
-
-                if ctx.guild.voice_client is not None:
-                    listen_channel.pop(ctx.guild.id)
-                    play_waitlist[ctx.guild.id] = []
-                    await ctx.guild.voice_client.disconnect()
-                    return
-
-            try:
-                play_waitlist[ctx.guild.id].append({"content": "接続しました", "userid": ctx.user.id, "serverid": ctx.guild.id})
-            except KeyError:
-                play_waitlist[ctx.guild.id] = []
-                play_waitlist[ctx.guild.id].append({"content": "接続しました", "userid": ctx.user.id, "serverid": ctx.guild.id})
-
-            playsound_list = play_waitlist[ctx.guild.id]
-
-            if len(playsound_list) == 1:
-                while playsound_list:
-
-                    path = f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"], playsound_list[0]["serverid"])
-                    ctx.guild.voice_client.play(discord.FFmpegPCMAudio(path))
-
-                    with wave.open(path, 'rb') as f:
-                        fr = f.getframerate()
-                        fn = f.getnframes()
-
-                    await asyncio.sleep(1.0 * (fn/fr) + 0.25)
-                    playsound_list.pop(0)
-
-        elif ctx.guild.voice_client is not None:
-            await ctx.response.send_message("すでにボイスチャンネルに接続しています", ephemeral=True)
-            return
+        reply = await f_com.join.join(ctx.user, ctx.guild, ctx.channel)
+        await ctx.response.send_message(reply.content)
+        if reply.continue_:
+            reply = await f_com.join.play(ctx.user, ctx.guild)
+            if reply is not None:
+                await ctx.followup.send(reply)
 
     @tree.command(
         name="leave",
@@ -126,15 +83,8 @@ if __name__ == '__main__':
     @discord.app_commands.guild_only
 
     async def leave(ctx:discord.Interaction):
-
-        if ctx.guild.voice_client is None:
-            await ctx.response.send_message("接続していません", ephemeral=True)
-            return
-        if ctx.channel.guild.voice_client is not None:
-            listen_channel.pop(ctx.guild.id)
-            play_waitlist[ctx.guild.id] = []
-            await ctx.guild.voice_client.disconnect()
-            await ctx.response.send_message("退出しました")
+        reply = await f_com.leave(ctx.guild)
+        await ctx.response.send_message(reply)
 
     @tree.command(
         name="server_settings_status",
@@ -144,7 +94,7 @@ if __name__ == '__main__':
     @discord.app_commands.guild_only
 
     async def server_settings_status(ctx:discord.Interaction):
-        reply = f_com.server_settings.status.main(ctx.guild)
+        reply = f_com.server_settings.status(ctx.guild)
         await ctx.response.send_message(embed=reply.embed)
 
 
@@ -156,7 +106,7 @@ if __name__ == '__main__':
     @discord.app_commands.guild_only
 
     async def server_settings_auto_join(ctx:discord.Interaction):
-        reply = f_com.server_settings.auto_join.main(ctx.guild, ctx.channel, ctx.user)
+        reply = f_com.server_settings.auto_join(ctx.guild, ctx.channel, ctx.user)
         await ctx.response.send_message(reply.content)
 
 
@@ -168,7 +118,7 @@ if __name__ == '__main__':
     @discord.app_commands.guild_only
 
     async def server_settings_auto_ch(ctx:discord.Interaction):
-        reply = f_com.server_settings.auto_ch.main(ctx.guild, ctx.channel, ctx.user)
+        reply = f_com.server_settings.auto_ch(ctx.guild, ctx.channel, ctx.user)
         await ctx.response.send_message(reply.content)
 
     @tree.command(
@@ -179,7 +129,7 @@ if __name__ == '__main__':
     @discord.app_commands.guild_only
 
     async def change_voice_models_list(ctx:discord.Interaction):
-        reply = f_com.change_voice.help.main()
+        reply = f_com.change_voice.help()
         await ctx.response.send_message(embed=reply.embed)
 
     @tree.command(
@@ -190,7 +140,7 @@ if __name__ == '__main__':
     @discord.app_commands.guild_only
 
     async def change_voice_models(ctx:discord.Interaction, model_number:int):
-        reply = f_com.change_voice.models.main(ctx.user,str(model_number))
+        reply = await f_com.change_voice.models.main(ctx.user,str(model_number))
         await ctx.response.send_message(reply.content)
 
     @tree.command(
@@ -221,8 +171,6 @@ if __name__ == '__main__':
 
     @client.event
     async def on_message(message):
-        global listen_channel
-        global play_waitlist
         global prefix
 
         if message.author.bot:
@@ -235,13 +183,13 @@ if __name__ == '__main__':
 
         elif message.content == f"{prefix}help":
 
-            reply = f_com.help.main()
+            reply = f_com.help()
 
-            await message.channel.send(embed=reply.embed)
+            await message.channel.send(embed=reply)
 
         elif message.content == f"{prefix}ping":
-            reply = f_com.ping.main()
-            await message.channel.send(reply.content)
+            reply = f_com.ping()
+            await message.channel.send(reply)
 
         elif message.content.startswith(f"{prefix}wav"):
             msg_len = len(message.content)
@@ -251,101 +199,52 @@ if __name__ == '__main__':
             else:
                 printcontent = message.content[4 + len(prefix):]
                 if printcontent != "":
-                    reply = f_com.wav.main(printcontent, message.author.id, message.guild.id)
+                    reply = await f_com.wav.main(printcontent, message.author.id, message.guild.id)
                     try:
                         await message.channel.send(reply.content, file=discord.File(reply.file))
                     except AttributeError:
                         await message.channel.send("APIが起動していないため音声を生成することができませんでした。")
 
         elif message.content == f'{prefix}join':
-            if message.author.voice is None:
-                await message.channel.send("ボイスチャンネルに接続してから使用してください")
-                return
-            elif message.guild.voice_client is None:
-                listen_channel[message.guild.id] = message.channel.id
-                await message.author.voice.channel.connect()
-                await message.channel.send(f"接続しました\n読み上げるチャンネル: <#{str(message.channel.id)}>")
-
-                try:
-                    f_voice.get_status()
-                except requests.exceptions.ConnectionError:
-                    await message.channel.send("**現在、APIが起動していないため音声を生成することができません。**")
-                    f_print.printinfo.error("Audio could not be generated because the API was not activated.")
-
-                    if message.channel.guild.voice_client is not None:
-                        listen_channel.pop(message.guild.id)
-                        play_waitlist[message.guild.id] = []
-                        await message.guild.voice_client.disconnect()
-                        return
-
-                try:
-                    play_waitlist[message.guild.id].append({"content": "接続しました", "userid": message.author.id, "serverid": message.guild.id})
-                except KeyError:
-                    play_waitlist[message.guild.id] = []
-                    play_waitlist[message.guild.id].append({"content": "接続しました", "userid": message.author.id, "serverid": message.guild.id})
-
-                playsound_list = play_waitlist[message.guild.id]
-
-                if len(playsound_list) == 1:
-                    while playsound_list:
-
-                        path = f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"], playsound_list[0]["serverid"])
-
-                        try:
-                            message.guild.voice_client.play(discord.FFmpegPCMAudio(path))
-                        except discord.errors.ClientException:
-                            playsound_list = []
-                            return
-
-                        with wave.open(path, 'rb') as f:
-                            fr = f.getframerate()
-                            fn = f.getnframes()
-
-                        await asyncio.sleep(1.0 * (fn/fr) + 0.25)
-                        playsound_list.pop(0)
-
-            elif message.guild.voice_client is not None:
-                await message.channel.send("すでにボイスチャンネルに接続しています")
-                return
+            reply = await f_com.join.join(message.author, message.guild, message.channel)
+            await message.channel.send(reply.content)
+            if reply.continue_:
+                reply = await f_com.join.play(message.author, message.guild)
+                if reply is not None:
+                    await message.channel.send(reply)
 
         elif message.content == f"{prefix}leave":
-            if message.guild.voice_client is None:
-                await message.channel.send("接続していません")
-                return
-            if message.channel.guild.voice_client is not None:
-                listen_channel.pop(message.guild.id)
-                play_waitlist[message.guild.id] = []
-                await message.guild.voice_client.disconnect()
-                await message.channel.send("退出しました")
+            reply = await f_com.leave(message.guild)
+            await message.channel.send(reply)
 
         elif message.content.startswith(f"{prefix}server_settings"):
             msg_len = len(message.content)
 
             if msg_len <= 16 + len(prefix):
-                reply = f_com.server_settings.help.main()
+                reply = f_com.server_settings.help()
                 await message.channel.send(embed=reply.embed)
             else:
                 if message.content.startswith(f"{prefix}server_settings status"):
-                    reply = f_com.server_settings.status.main(message.guild)
+                    reply = f_com.server_settings.status(message.guild)
                     await message.channel.send(embed=reply.embed)
 
                 elif message.content.startswith(f"{prefix}server_settings auto_join"):
-                    reply = f_com.server_settings.auto_join.main(message.guild, message.channel, message.author)
+                    reply = f_com.server_settings.auto_join(message.guild, message.channel, message.author)
                     await message.channel.send(reply.content)
 
                 elif message.content.startswith(f"{prefix}server_settings auto_ch"):
-                    reply = f_com.server_settings.auto_ch.main(message.guild, message.channel, message.author)
+                    reply = f_com.server_settings.auto_ch(message.guild, message.channel, message.author)
                     await message.channel.send(reply.content)
 
         elif message.content.startswith(f"{prefix}change_voice"):
             msg_len = len(message.content)
             if msg_len <= 13 + len(prefix):
-                reply = f_com.change_voice.help.main()
+                reply = f_com.change_voice.help()
                 await message.channel.send(embed=reply.embed)
             else:
                 if message.content.startswith(f"{prefix}change_voice models"):
                     if msg_len <= 20 + len(prefix):
-                        reply = f_com.change_voice.models.help()
+                        reply = await f_com.change_voice.models.help()
                         await message.channel.send(embed=reply.embed)
                     else:
                         if not message.content[20 + len(prefix):].isdigit():
@@ -353,7 +252,7 @@ if __name__ == '__main__':
                             return
 
                         input_id = f_data.fullnum2halfnum(message.content[20 + len(prefix):])
-                        reply = f_com.change_voice.models.main(message.author, input_id)
+                        reply = await f_com.change_voice.models.main(message.author, input_id)
                         await message.channel.send(reply.content)
 
                 if message.content.startswith(f"{prefix}change_voice length"):
@@ -374,7 +273,7 @@ if __name__ == '__main__':
             if message.content.startswith(";"):
                 return
 
-            if message.channel.id == listen_channel[message.guild.id]:
+            if message.channel.id == global_.listen_channel[message.guild.id]:
 
                 replace_dict = {'<:.+:.+>': '',
                                 "https?://[\w/:%#\$&\?\(\)~\.=\+\-]+": '、url、',
@@ -385,23 +284,23 @@ if __name__ == '__main__':
 
                 if message.content != "":
 
-                    if len(message.content) >= read_limit:
-                        message.content = message.content[:read_limit] + "、以下略"
+                    if len(message.content) >= global_.read_limit:
+                        message.content = message.content[:global_.read_limit] + "、以下略"
 
                     try:
-                        play_waitlist[message.guild.id].append({"content": message.content, "userid": message.author.id, "serverid": message.guild.id})
+                        global_.play_waitlist[message.guild.id].append({"content": message.content, "userid": message.author.id, "serverid": message.guild.id})
                     except KeyError:
-                        play_waitlist[message.guild.id] = []
-                        play_waitlist[message.guild.id].append({"content": message.content, "userid": message.author.id, "serverid": message.guild.id})
+                        global_.play_waitlist[message.guild.id] = []
+                        global_.play_waitlist[message.guild.id].append({"content": message.content, "userid": message.author.id, "serverid": message.guild.id})
 
-                    playsound_list = play_waitlist[message.guild.id]
+                    playsound_list = global_.play_waitlist[message.guild.id]
 
                     if len(playsound_list) == 1:
                         while playsound_list:
 
                             try:
-                                path = f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"], playsound_list[0]["serverid"])
-                            except requests.exceptions.ConnectionError:
+                                path = await f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"], playsound_list[0]["serverid"])
+                            except aiohttp.client_exceptions.ClientConnectorError:
                                 f_print.printinfo.error("Audio could not be generated because the API was not activated.")
                                 return
 
@@ -425,11 +324,11 @@ if __name__ == '__main__':
         if before.channel is not None:
             if len(before.channel.members) == 1:
                 if before.channel.members[0] == client.user:
-                    play_waitlist[before.channel.guild.id] = []
+                    global_.play_waitlist[before.channel.guild.id] = []
                     if before.channel.guild.voice_client is not None:
                         await before.channel.guild.voice_client.disconnect()
-                        if before.channel.guild.id in listen_channel:
-                            channel_id = listen_channel.pop(before.channel.guild.id)
+                        if before.channel.guild.id in global_.listen_channel:
+                            channel_id = global_.listen_channel.pop(before.channel.guild.id)
                             channel = client.get_channel(channel_id)
                             await channel.send("ボイスチャンネルがBOTのみになったので自動退出しました")
 
@@ -441,18 +340,18 @@ if __name__ == '__main__':
 
                         if s_data["auto_join_read_channel"] is None:
                             return
-                        elif pre_joinvoice:
+                        elif global_.pre_joinvoice:
                             return
 
-                        pre_joinvoice = True
+                        global_.pre_joinvoice = True
 
                         read_channel = client.get_channel(s_data["auto_join_read_channel"])
 
-                        listen_channel[after.channel.guild.id] = read_channel.id
+                        global_.listen_channel[after.channel.guild.id] = read_channel.id
                         await asyncio.sleep(1)
                         if after.channel is not None:
                             await after.channel.connect()
                             await read_channel.send(f"接続しました\n読み上げるチャンネル: <#{str(read_channel.id)}>")
-                        pre_joinvoice = False
+                        global_.pre_joinvoice = False
 
     client.run(TOKEN)
