@@ -1,7 +1,8 @@
-import requests
 import json
 import re
 import os
+
+import aiohttp
 
 import data as f_data
 
@@ -10,7 +11,7 @@ port = f_data.read()["settings"]["port"]
 default_model = f_data.read()["settings"]["default_model"]
 
 
-def create_voice(mscontent: str, user_id: int, server_id: int):
+async def create_voice(mscontent: str, user_id: int, server_id: int):
 
     if type(user_id) == int:
         user_id = str(user_id)
@@ -48,51 +49,51 @@ def create_voice(mscontent: str, user_id: int, server_id: int):
 
     response_text = f"http://{url}:{port}/voice?text={mscontent}&encoding=utf-8&model_id={model_id}&speaker_id={speaker_id}&sdp_ratio={sdp_ratio}&noise={noise}&noisew={noisew}&length={length}&language=JP&auto_split=true&split_interval={split_interval}&assist_text_weight={assist_text_weight}&style={style}&style_weight={style_weight}"
 
-    response = requests.get(response_text)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(response_text) as response:
+            wav = await response.content.read()
 
-    wav = response.content
+            path = f"./temp/temp_{server_id}.wav"
 
-    path = f"./temp/temp_{server_id}.wav"
+            try:
+                with open(path, "wb") as wr:
+                    wr.write(wav)
+            except FileNotFoundError:
+                os.makedirs("./temp/", exist_ok=True)
+                with open(path, "wb") as wr:
+                    wr.write(wav)
 
-    try:
-        with open(path, "wb") as wr:
-            wr.write(wav)
-    except FileNotFoundError:
-        os.makedirs("./temp/", exist_ok=True)
-        with open(path, "wb") as wr:
-            wr.write(wav)
+            return path
 
-    return path
+async def get_model():
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"http://{url}:{port}/models/info") as response:
+            model_data = await response.json()
 
-def get_model():
-    response = requests.get(f"http://{url}:{port}/models/info")
-    model_data = json.loads(response.content)
+            print_text = ""
+            print_dict = {}
 
-    print_text = ""
-    print_dict = {}
+            for i in range(len(model_data)):
 
-    for i in range(len(model_data)):
+                model_names = model_data[str(i)]["id2spk"]
 
-        model_names = model_data[str(i)]["id2spk"]
+                for i2 in range(len(model_names)):
+                    if i2 == 0:
+                        l = model_names[str(i2)]
+                    else:
+                        l = l + ", " + model_names[str(i2)]
 
-        for i2 in range(len(model_names)):
-            if i2 == 0:
-                l = model_names[str(i2)]
-            else:
-                l = l + ", " + model_names[str(i2)]
+                if i == 0:
+                    print_text = f"{str(i)}: {l}"
+                    print_dict[str(i)] = l
+                else:
+                    print_text = f"{print_text}\n{str(i)}: {l}"
+                    print_dict[str(i)] = l
 
-        if i == 0:
-            print_text = f"{str(i)}: {l}"
-            print_dict[str(i)] = l
-        else:
-            print_text = f"{print_text}\n{str(i)}: {l}"
-            print_dict[str(i)] = l
+            return [print_dict, print_text]
 
-
-
-    return [print_dict, print_text]
-
-def get_status():
-    response = requests.get(f"http://{url}:{port}/status")
-    status = json.loads(response.content)
-    return status
+async def get_status():
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"http://{url}:{port}/status") as response:
+            status = await response.json()
+            return status
