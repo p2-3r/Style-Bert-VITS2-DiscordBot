@@ -192,9 +192,17 @@ class Change_voice():
     class Models():
         async def help(self):
             responce = await f_voice.get_model()
+            model_dict = responce[0]
             model_list = responce[1]
             embed = discord.Embed(title="使用できるモデルのリスト",description=f"{model_list}\nex.**{prefix}change_voice models 1**")
             self.embed = embed
+
+            select_item = [discord.SelectOption(label=value,value=f"{value},{str(index)}") for index, value in enumerate(list(model_dict.values()))]
+
+            view = discord.ui.View()
+            view.add_item(discord.ui.Select(options=select_item, custom_id="change_voice_models", placeholder="使用したいモデルを選択してください..."))
+
+            self.view = view
             return self
 
         async def main(self, user: discord.User, id: str):

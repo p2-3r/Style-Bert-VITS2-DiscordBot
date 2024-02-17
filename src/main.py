@@ -129,8 +129,8 @@ if __name__ == '__main__':
     @discord.app_commands.guild_only
 
     async def change_voice_models_list(ctx:discord.Interaction):
-        reply = f_com.change_voice.help()
-        await ctx.response.send_message(embed=reply.embed)
+        reply = await f_com.change_voice.models.help()
+        await ctx.response.send_message(embed=reply.embed, view=reply.view)
 
     @tree.command(
         name="change_voice_models",
@@ -245,7 +245,7 @@ if __name__ == '__main__':
                 if message.content.startswith(f"{prefix}change_voice models"):
                     if msg_len <= 20 + len(prefix):
                         reply = await f_com.change_voice.models.help()
-                        await message.channel.send(embed=reply.embed)
+                        await message.channel.send(embed=reply.embed, view=reply.view)
                     else:
                         if not message.content[20 + len(prefix):].isdigit():
                             await message.channel.send(f"idに数字以外が含まれています `{message.content[0:19 + len(prefix)]}`__**`{message.content[20 + len(prefix):]}`**__")
@@ -353,5 +353,27 @@ if __name__ == '__main__':
                             await after.channel.connect()
                             await read_channel.send(f"接続しました\n読み上げるチャンネル: <#{str(read_channel.id)}>")
                         global_.pre_joinvoice = False
+
+    @client.event
+    async def on_interaction(ctx:discord.Interaction):
+        try:
+            if ctx.data['component_type'] == 3:
+                await on_dropdown(ctx)
+        except KeyError:
+            pass
+
+    async def on_dropdown(ctx: discord.Interaction):
+        if ctx.data["custom_id"] == "change_voice_models":
+            select_list = ctx.data["values"][0].split(",")
+            select_name, select_id = select_list[0], select_list[1]
+            userdata = f_data.read_userdata(ctx.user.id)
+            if userdata is not None:
+                userdata["model_id"] = select_id
+            else:
+                f_data.create_userdata(ctx.user.id)
+                userdata = f_data.read_userdata(ctx.user.id)
+                userdata["model_id"] = select_id
+            f_data.write_userdata(ctx.user.id, userdata)
+            await ctx.response.send_message(f"{ctx.user.mention}\n使用するモデルを{select_name}に変更しました")
 
     client.run(TOKEN)

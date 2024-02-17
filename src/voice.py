@@ -97,3 +97,4 @@ async def get_status():
         async with session.get(f"http://{url}:{port}/status") as response:
             status = await response.json()
             return status
+
