@@ -49,6 +49,10 @@ def write_userdata(user_id, user_data):
 
     if user_id in data["user_data"]:
         data["user_data"][user_id] = user_data
+    else:
+        create_userdata(user_id)
+        data = read()
+        data["user_data"][user_id] = user_data
 
     write(data)
 
