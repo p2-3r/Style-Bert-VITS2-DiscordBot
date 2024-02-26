@@ -18,6 +18,7 @@ def ping() -> str:
 def help() -> discord.Embed:
     field_dict = {f"**{prefix}ping**": "pong!",
                   f"**{prefix}wav (content)**": "指定した内容を生成してその音声ファイルを添付したメッセージを送信します",
+                  f"**{prefix}dictionary**": "サーバー辞書メニューを表示します",
                   f"**{prefix}join**": "使用した人がいるボイスチャンネルに接続します",
                   f"**{prefix}leave**": "ボイスチャンネルから切断します",
                   f"**{prefix}change_voice**": "使用する声を変更するためのコマンドのヘルプを表示します",
@@ -43,6 +44,57 @@ class Wav():
     def help(self):
         self.embed = discord.Embed(title="**wav** コマンドの使用方法", description=f"{prefix}wav (生成したい音声の内容)")
         return self
+
+class Dictionary():
+    def display(self, guild: discord.Guild):
+        server_dict = f_data.read_server_dict(guild.id)
+
+        if server_dict != {}:
+            for i, [key, value] in enumerate(server_dict.items()):
+                if i == 0:
+                    dict_text = f"{key} -> {value}"
+                else:
+                    dict_text = dict_text + f"\n{key} -> {value}"
+            if len(dict_text) <= 4095:
+                self.embed = discord.Embed(title="このサーバーの辞書", description=dict_text)
+            else:
+                self.embed = discord.Embed(title="登録されている単語が多すぎたため表示できませんでした。")
+
+        else:
+            self.embed = discord.Embed(title="このサーバーではまだ何も登録されていません。")
+
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(label="add", style=discord.ButtonStyle.primary, custom_id="dict_add"))
+        view.add_item(discord.ui.Button(label="remove", style=discord.ButtonStyle.secondary, custom_id="dict_remove"))
+        self.view = view
+
+        return self
+
+    class Add_Modal(discord.ui.Modal, title="単語と読み方の登録"):
+        word = discord.ui.TextInput(label="単語", max_length=15)
+        read = discord.ui.TextInput(label="読み方", max_length=15)
+
+        async def on_submit(self, ctx: discord.Interaction):
+            server_dict = f_data.read_server_dict(ctx.guild.id)
+            server_dict[str(self.word)] = str(self.read)
+            f_data.write_server_dict(ctx.guild.id, server_dict)
+            await ctx.response.send_message(f"読み方を設定しました\n単語: **{self.word}** 読み方: **{self.read}**")
+
+    class Remove_Modal(discord.ui.Modal, title="辞書の削除"):
+        word = discord.ui.TextInput(label="削除したい単語", max_length=20)
+
+        async def on_submit(self, ctx: discord.Interaction):
+            server_dict = f_data.read_server_dict(ctx.guild.id)
+
+            try:
+                server_dict.pop(str(self.word))
+            except KeyError:
+                await ctx.response.send_message(f"辞書に 単語: **{self.word}** は存在しません", ephemeral=True)
+                return
+
+            f_data.write_server_dict(ctx.guild.id, server_dict)
+            await ctx.response.send_message(f"辞書から読み方を削除しました\n削除した単語: **{self.word}**")
+
 
 class Join():
     async def join(self, author: discord.User, guild: discord.Guild, channel: discord.TextChannel) -> classmethod:
@@ -78,27 +130,7 @@ class Join():
 
             return reply
 
-        try:
-            global_.play_waitlist[guild.id].append({"content": "接続しました", "userid": author.id, "serverid": guild.id})
-        except KeyError:
-            global_.play_waitlist[guild.id] = []
-            global_.play_waitlist[guild.id].append({"content": "接続しました", "userid": author.id, "serverid": guild.id})
-
-
-        playsound_list = global_.play_waitlist[guild.id]
-
-        if len(playsound_list) == 1:
-            while playsound_list:
-
-                path = await f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"], playsound_list[0]["serverid"])
-                guild.voice_client.play(discord.FFmpegPCMAudio(path))
-
-                with wave.open(path, 'rb') as f:
-                    fr = f.getframerate()
-                    fn = f.getnframes()
-
-                await asyncio.sleep(1.0 * (fn/fr) + 0.25)
-                playsound_list.pop(0)
+        await playsound.play(author, guild, "接続しました")
 
 async def leave(guild: discord.Guild) -> str:
     if guild.voice_client is None:
@@ -178,6 +210,27 @@ class Server_settings():
 
         return self
 
+    def dictionary_only_admin(self, guild: discord.guild, user: discord.user):
+        if user.guild_permissions.administrator:
+            current_server_data = f_data.read_serverdata(guild.id)
+
+            if current_server_data["dictionary_only_admin"] == False:
+                current_server_data["dictionary_only_admin"] = True
+
+                ml = "サーバー管理者のみ"
+
+            elif current_server_data["dictionary_only_admin"] == True:
+                current_server_data["dictionary_only_admin"] = False
+                ml = "ユーザー全員"
+
+            f_data.write_serverdata(guild.id, current_server_data)
+
+            self.content = f"サーバー辞書の編集権限を**{ml}**にしました"
+            return self
+        else:
+            self.content = "このコマンドはサーバーの管理者でないと使用できません"
+            return self
+
 class Change_voice():
     def help(self):
         field_dict = {f"__**{prefix}change_voice models**__": f"modelsコマンドでモデル一覧を表示\nmodels (数字)で(数字)のモデルに変更\nex. **{prefix}change_voice models 0**",
@@ -250,7 +303,33 @@ class Change_voice():
     models = Models()
     length = Length()
 
+class Playsound():
+
+    async def play(self, author: discord.User, guild: discord.Guild, content: str):
+        try:
+            global_.play_waitlist[guild.id].append({"content": content, "userid": author.id, "serverid": guild.id})
+        except KeyError:
+            global_.play_waitlist[guild.id] = []
+            global_.play_waitlist[guild.id].append({"content": content, "userid": author.id, "serverid": guild.id})
+
+        playsound_list = global_.play_waitlist[guild.id]
+
+        if len(playsound_list) == 1:
+            while playsound_list:
+
+                path = await f_voice.create_voice(playsound_list[0]["content"], playsound_list[0]["userid"], playsound_list[0]["serverid"])
+                guild.voice_client.play(discord.FFmpegPCMAudio(path))
+
+                with wave.open(path, 'rb') as f:
+                    fr = f.getframerate()
+                    fn = f.getnframes()
+
+                await asyncio.sleep(1.0 * (fn/fr) + 0.25)
+                playsound_list.pop(0)
+
 wav = Wav()
 join = Join()
+dictionary = Dictionary()
 server_settings = Server_settings()
 change_voice = Change_voice()
+playsound = Playsound()
