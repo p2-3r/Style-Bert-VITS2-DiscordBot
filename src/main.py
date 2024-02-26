@@ -259,7 +259,7 @@ if __name__ == '__main__':
                     await message.channel.send(reply.content)
 
                 elif message.content.startswith(f"{prefix}server_settings dict_onlyadmin"):
-                    reply = f_com.server_settings.auto_join(message.guild, message.channel, message.author)
+                    reply = f_com.server_settings.dictionary_only_admin(message.guild, message.channel, message.author)
                     await message.channel.send(reply.content)
 
         elif message.content.startswith(f"{prefix}change_voice"):
