@@ -2,13 +2,13 @@ import json
 import re
 
 def read():
-    with  open("data.json" , "r") as f:
+    with  open("data.json", "r", encoding="utf-8") as f:
         data = json.load(f)
     return data
 
 def write(data):
-    with open('data.json', 'w') as f:
-        json.dump(data, f, indent=4)
+    with open('data.json', 'w', encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
 
 def read_userdata(user_id):
 
@@ -69,7 +69,9 @@ def read_serverdata(server_id):
         write(data_json)
 
     servers_data_template = {"auto_join": False,
-                             "auto_join_read_channel": None}
+                             "auto_join_read_channel": None,
+                             "dictionary_only_admin": True,
+                             "dictionary": {}}
 
     try:
         current_server_data = servers_data[server_id]
@@ -101,6 +103,16 @@ def write_serverdata(server_id,server_data):
     data_json["server_data"][server_id] = server_data
 
     write(data_json)
+
+def read_server_dict(server_id: int) -> dict:
+    server_data = read_serverdata(server_id)
+    server_dict = server_data["dictionary"]
+    return server_dict
+
+def write_server_dict(server_id: int, data: dict):
+    server_data = read_serverdata(server_id)
+    server_data["dictionary"] = data
+    write_serverdata(server_id, server_data)
 
 def fullnum2halfnum(input):
 
