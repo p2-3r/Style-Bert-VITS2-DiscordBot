@@ -258,6 +258,10 @@ if __name__ == '__main__':
                     reply = f_com.server_settings.auto_ch(message.guild, message.channel, message.author)
                     await message.channel.send(reply.content)
 
+                elif message.content.startswith(f"{prefix}server_settings dict_onlyadmin"):
+                    reply = f_com.server_settings.auto_join(message.guild, message.channel, message.author)
+                    await message.channel.send(reply.content)
+
         elif message.content.startswith(f"{prefix}change_voice"):
             msg_len = len(message.content)
             if msg_len <= 13 + len(prefix):

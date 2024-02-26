@@ -148,7 +148,8 @@ class Server_settings():
     def help(self):
         field_dict = {f"__**{prefix}server_settings status**__": "このサーバーの現在の設定を表示します。このsettingsコマンド以外はそのサーバーの管理者でないと使用できません",
                       f"__**{prefix}server_settings auto_join**__": "このコマンドの使用でボイスチャットに誰かが参加したとき自動参加するかしないかを切り替えられます",
-                      f"__**{prefix}server_settings auto_ch**__": "自動参加時に読み上げるテキストチャンネルを設定します"}
+                      f"__**{prefix}server_settings auto_ch**__": "自動参加時に読み上げるテキストチャンネルを設定します",
+                      f"__**{prefix}server_settings dict_onlyadmin**__": "サーバー辞書を管理者だけかユーザー全員が編集できるようにするか切り替えます"}
 
         embed = discord.Embed(title="**settings** コマンドの使用方法")
         [embed.add_field(name=i,value=l) for i, l in field_dict.items()]
