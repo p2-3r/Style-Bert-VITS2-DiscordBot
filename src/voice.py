@@ -92,6 +92,12 @@ async def get_model():
 
             return [print_dict, print_text]
 
+async def get_speaker(model_id: int) -> dict:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"http://{url}:{port}/models/info") as response:
+            model_data = await response.json()
+            return model_data[str(model_id)]["id2spk"]
+
 async def get_status():
     async with aiohttp.ClientSession() as session:
         async with session.get(f"http://{url}:{port}/status") as response:

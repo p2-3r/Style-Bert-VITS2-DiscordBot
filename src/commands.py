@@ -32,20 +32,23 @@ def help() -> discord.Embed:
     return embed
 
 class Wav():
+    @classmethod
     async def main(self, content: str, user_id :int, server_id: int):
         self.content = f"「{content}」"
         try:
             self.file = await f_voice.create_voice(content, user_id, server_id)
         except aiohttp.client_exceptions.ClientConnectorError:
-            f_print.printinfo.error("Audio could not be generated because the API was not activated.")
+            f_print.Printinfo.error("Audio could not be generated because the API was not activated.")
 
         return self
 
+    @classmethod
     def help(self):
         self.embed = discord.Embed(title="**wav** コマンドの使用方法", description=f"{prefix}wav (生成したい音声の内容)")
         return self
 
 class Dictionary():
+    @classmethod
     def display(self, guild: discord.Guild):
         server_dict = f_data.read_server_dict(guild.id)
 
@@ -97,6 +100,7 @@ class Dictionary():
 
 
 class Join():
+    @classmethod
     async def join(self, author: discord.User, guild: discord.Guild, channel: discord.TextChannel) -> classmethod:
         if author.voice is None:
             self.content = "ボイスチャンネルに接続してから使用してください"
@@ -115,13 +119,14 @@ class Join():
             self.continue_ = True
             return self
 
+    @classmethod
     async def play(self, author: discord.User, guild: discord.Guild) -> str:
 
         try:
             l = await f_voice.get_status()
         except aiohttp.client_exceptions.ClientConnectorError:
             reply = "**現在、APIが起動していないため音声を生成することができません。**"
-            f_print.printinfo.error("Audio could not be generated because the API was not activated.")
+            f_print.Printinfo.error("Audio could not be generated because the API was not activated.")
 
             if guild.voice_client is not None:
                 global_.listen_channel.pop(guild.id)
@@ -130,7 +135,7 @@ class Join():
 
             return reply
 
-        await playsound.play(author, guild, "接続しました")
+        await Playsound.play(author, guild, "接続しました")
 
 async def leave(guild: discord.Guild) -> str:
     if guild.voice_client is None:
@@ -145,6 +150,7 @@ async def leave(guild: discord.Guild) -> str:
         return reply
 
 class Server_settings():
+    @classmethod
     def help(self):
         field_dict = {f"__**{prefix}server_settings status**__": "このサーバーの現在の設定を表示します。このsettingsコマンド以外はそのサーバーの管理者でないと使用できません",
                       f"__**{prefix}server_settings auto_join**__": "このコマンドの使用でボイスチャットに誰かが参加したとき自動参加するかしないかを切り替えられます",
@@ -157,6 +163,7 @@ class Server_settings():
         self.embed = embed
         return self
 
+    @classmethod
     def status(self, guild: discord.guild):
         current_server_data = f_data.read_serverdata(guild.id)
         embed = discord.Embed(title=f"**{guild.name}** の現在設定")
@@ -174,6 +181,7 @@ class Server_settings():
 
         return self
 
+    @classmethod
     def auto_join(self, guild: discord.guild, channel: discord.channel, user: discord.user):
         if user.guild_permissions.administrator:
             current_server_data = f_data.read_serverdata(guild.id)
@@ -200,6 +208,7 @@ class Server_settings():
             self.content = "このコマンドはサーバーの管理者でないと使用できません"
             return self
 
+    @classmethod
     def auto_ch(self, guild: discord.guild, channel: discord.channel, user: discord.user):
         if user.guild_permissions.administrator:
             current_server_data = f_data.read_serverdata(guild.id)
@@ -211,6 +220,7 @@ class Server_settings():
 
         return self
 
+    @classmethod
     def dictionary_only_admin(self, guild: discord.guild, user: discord.user):
         if user.guild_permissions.administrator:
             current_server_data = f_data.read_serverdata(guild.id)
@@ -233,9 +243,11 @@ class Server_settings():
             return self
 
 class Change_voice():
+    @classmethod
     def help(self):
         field_dict = {f"__**{prefix}change_voice models**__": f"modelsコマンドでモデル一覧を表示\nmodels (数字)で(数字)のモデルに変更\nex. **{prefix}change_voice models 0**",
-                      f"__**{prefix}change_voice length**__": f"length (数字)で話す速度を変更\nex.**{prefix}change_voice length 1**"}
+                      f"__**{prefix}change_voice length**__": f"length (数字)で話す速度を変更\nex.**{prefix}change_voice length 1**",
+                      f"__**{prefix}change_voice speakers**__": f"話者を変更するためのメニューを表示します"}
 
         embed = discord.Embed(title="**change_voice** コマンドの使用方法")
         [embed.add_field(name=i,value=l) for i, l in field_dict.items()]
@@ -244,6 +256,7 @@ class Change_voice():
         return self
 
     class Models():
+        @classmethod
         async def help(self):
             responce = await f_voice.get_model()
             model_dict = responce[0]
@@ -259,6 +272,7 @@ class Change_voice():
             self.view = view
             return self
 
+        @classmethod
         async def main(self, user: discord.User, id: str):
 
             database = f_data.read()
@@ -270,6 +284,7 @@ class Change_voice():
 
             if id in model_data:
                 database["user_data"][str(user.id)]["model_id"] = id
+                database["user_data"][str(user.id)]["speaker_id"] = "0"
                 f_data.write(database)
 
                 self.content = f"使用するモデルを **{model_data[id]}** に変更しました"
@@ -277,11 +292,14 @@ class Change_voice():
                 self.content = f"モデル: **{id}** は存在しません"
 
             return self
+
     class Length():
+        @classmethod
         def help(self):
             embed = discord.Embed(title="使用方法",description=f"{prefix}change_voice length (数字)\nex.**{prefix}change_voice length 1**")
             self.embed = embed
             return self
+        @classmethod
         def main(self, user: discord.User, length: float):
             if length <= 0.1:
                 input_length = "0.1"
@@ -301,11 +319,34 @@ class Change_voice():
             self.content = f"lengthを **{input_length}** に変更しました"
             return self
 
-    models = Models()
-    length = Length()
+    class Speakers():
+        @classmethod
+        async def display(self, user: discord.User):
+            userdata = f_data.read_userdata(user.id)
+
+            if userdata is None:
+                return None
+
+            speakers_dict = await f_voice.get_speaker(userdata["model_id"])
+
+            for i, [key, value] in enumerate(speakers_dict.items()):
+                if i == 0:
+                    description = f"{key}: {value}"
+                else:
+                    description = description + f"\n{key}: {value}"
+
+            self.embed = discord.Embed(title="使用できる話者のリスト", description=description)
+
+            view = discord.ui.View()
+            select_item = [discord.SelectOption(label=value, value=value) for value in speakers_dict.values()]
+            view.add_item(discord.ui.Select(options=select_item, custom_id="change_voice_speakers", placeholder="使用したい話者を選択してください..."))
+
+            self.view = view
+            return self
 
 class Playsound():
 
+    @classmethod
     async def play(self, author: discord.User, guild: discord.Guild, content: str):
         try:
             global_.play_waitlist[guild.id].append({"content": content, "userid": author.id, "serverid": guild.id})
@@ -327,10 +368,3 @@ class Playsound():
 
                 await asyncio.sleep(1.0 * (fn/fr) + 0.25)
                 playsound_list.pop(0)
-
-wav = Wav()
-join = Join()
-dictionary = Dictionary()
-server_settings = Server_settings()
-change_voice = Change_voice()
-playsound = Playsound()
