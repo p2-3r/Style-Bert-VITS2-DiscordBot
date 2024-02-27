@@ -246,7 +246,8 @@ class Change_voice():
     @classmethod
     def help(self):
         field_dict = {f"__**{prefix}change_voice models**__": f"modelsコマンドでモデル一覧を表示\nmodels (数字)で(数字)のモデルに変更\nex. **{prefix}change_voice models 0**",
-                      f"__**{prefix}change_voice length**__": f"length (数字)で話す速度を変更\nex.**{prefix}change_voice length 1**"}
+                      f"__**{prefix}change_voice length**__": f"length (数字)で話す速度を変更\nex.**{prefix}change_voice length 1**",
+                      f"__**{prefix}change_voice speakers**__": f"話者を変更するためのメニューを表示します"}
 
         embed = discord.Embed(title="**change_voice** コマンドの使用方法")
         [embed.add_field(name=i,value=l) for i, l in field_dict.items()]

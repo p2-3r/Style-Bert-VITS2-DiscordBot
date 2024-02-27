@@ -278,14 +278,6 @@ if __name__ == '__main__':
                     reply = f_com.Server_settings.dictionary_only_admin(message.guild, message.author)
                     await message.channel.send(reply.content)
 
-                elif message.content.startswith(f"{prefix}server_settings speakers"):
-                    reply = await f_com.Change_voice.Speakers.display(message.author)
-
-                    if reply is None:
-                        await message.channel.send("モデルを選択してから実行してください")
-                        return
-
-                    await message.channel.send(embed=reply.embed, view=reply.view)
 
         elif message.content.startswith(f"{prefix}change_voice"):
             msg_len = len(message.content)
@@ -306,7 +298,7 @@ if __name__ == '__main__':
                         reply = await f_com.change_voice.models.main(message.author, input_id)
                         await message.channel.send(reply.content)
 
-                if message.content.startswith(f"{prefix}change_voice length"):
+                elif message.content.startswith(f"{prefix}change_voice length"):
                     if msg_len <= 20 + len(prefix):
                         reply = f_com.Change_voice.Length.help()
                         await message.channel.send(embed=reply.embed)
@@ -318,6 +310,15 @@ if __name__ == '__main__':
                             return
                         reply = f_com.change_voice.length.main(message.author, l)
                         await message.channel.send(reply.content)
+
+                elif message.content.startswith(f"{prefix}change_voice speakers"):
+                    reply = await f_com.Change_voice.Speakers.display(message.author)
+
+                    if reply is None:
+                        await message.channel.send("モデルを選択してから実行してください")
+                        return
+
+                    await message.channel.send(embed=reply.embed, view=reply.view)
 
         elif message.guild.voice_client is not None:
 
