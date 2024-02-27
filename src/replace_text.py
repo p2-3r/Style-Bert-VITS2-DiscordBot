@@ -5,6 +5,7 @@ import discord
 import data as f_data
 
 class Replace():
+    @classmethod
     def emoji_other(self, content) -> str:
         replace_dict = {'<:.+:.+>': '',
                         "https?://[\w/:%#\$&\?\(\)~\.=\+\-]+": '、url、',
@@ -14,6 +15,7 @@ class Replace():
             content = re.sub(before, after, content)
         return content
 
+    @classmethod
     def mention2username(self, content: str, client: discord.Client) -> str:
         mention_list = re.findall("<@[0-9]+>", content)
         if mention_list:
@@ -25,6 +27,7 @@ class Replace():
 
         return content
 
+    @classmethod
     def server_dict(self, content: str, server_id: int) -> str:
         server_dict = f_data.read_server_dict(server_id)
 
@@ -38,11 +41,8 @@ class Replace():
 
         return content
 
-replace = Replace()
-
 def replace_text(content: str, client: discord.Client, server_id: int) -> str:
-    content = replace.emoji_other(content)
-    content = replace.mention2username(content, client)
-    content = replace.server_dict(content, server_id)
+    content = Replace.emoji_other(content)
+    content = Replace.mention2username(content, client)
+    content = Replace.server_dict(content, server_id)
     return content
-

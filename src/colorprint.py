@@ -11,25 +11,26 @@ class Color:
     YELLOW = '\033[33m'
     END = '\033[0m'
 
+    @classmethod
     def print(self, content, color):
         return color + content + self.END
 
-color = Color()
-
 class Printinfo:
 
+    @classmethod
     def time(self):
         l = f'{now().hour:02}:{now().minute:02}:{now().second:02}'
-        j = color.print(l, color.GREEN)
+        j = Color.print(l, Color.GREEN)
         return j
 
+    @classmethod
     def info(self, content):
-        print(f"{color.print('INFO', color.BLUE)}|{Printinfo().time()}|{content}")
+        print(f"{Color.print('INFO', Color.BLUE)}|{self.time()}|{content}")
 
+    @classmethod
     def error(self, content):
-        print(f"{color.print('ERROR', color.RED)}|{Printinfo().time()}|{content}")
+        print(f"{Color.print('ERROR', Color.RED)}|{self.time()}|{content}")
 
+    @classmethod
     def complete(self, content):
-        print(f"{color.print('COMPLETE', color.YELLOW)}|{Printinfo().time()}|{content}")
-
-printinfo = Printinfo()
+        print(f"{Color.print('COMPLETE', Color.YELLOW)}|{self.time()}|{content}")
