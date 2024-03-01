@@ -395,8 +395,8 @@ if __name__ == '__main__':
 
     async def on_dropdown(ctx: discord.Interaction):
         if ctx.data["custom_id"] == "change_voice_models":
-            select_list = ctx.data["values"][0].split(",")
-            select_name, select_id = select_list[0], select_list[1]
+            select_list = ctx.data["values"][0]
+            select_id = select_list[0]
             userdata = f_data.read_userdata(ctx.user.id)
 
             if userdata is not None:
@@ -409,7 +409,9 @@ if __name__ == '__main__':
                 userdata["speaker_id"] = "0"
 
             f_data.write_userdata(ctx.user.id, userdata)
-            await ctx.response.send_message(f"使用するモデルを{select_name}に変更しました", ephemeral=True)
+            models = await f_voice.get_model()
+            model_name = models[0][select_id]
+            await ctx.response.send_message(f"使用するモデルを{model_name}に変更しました", ephemeral=True)
 
         if ctx.data["custom_id"] == "change_voice_speakers":
             select_speaker = ctx.data["values"][0]
