@@ -395,8 +395,7 @@ if __name__ == '__main__':
 
     async def on_dropdown(ctx: discord.Interaction):
         if ctx.data["custom_id"] == "change_voice_models":
-            select_list = ctx.data["values"][0]
-            select_id = select_list[0]
+            select_id = ctx.data["values"][0]
             userdata = f_data.read_userdata(ctx.user.id)
 
             if userdata is not None:
