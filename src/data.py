@@ -1,126 +1,185 @@
+from pathlib import Path
 import json
 import re
+import typing
+from typing import Union, Optional
+import copy
 
-def read():
-    with  open("data.json", "r", encoding="utf-8") as f:
-        data = json.load(f)
-    return data
+from src import model
+from src.model import ModelFolder
 
-def write(data):
-    with open('data.json', 'w', encoding="utf-8") as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
 
-def read_userdata(user_id):
+class Json_():
+    def __init__(self, path: Path) -> None:
+        self.path = path
 
-    if type(user_id) == int:
-        user_id = str(user_id)
+    def read_all(self) -> dict[str, typing.Any]:
+        with self.path.open("r", encoding="utf-8") as f:
+            return json.load(f)
 
-    data = read()
+    def write_all(self, data: dict[str, typing.Any]) -> None:
+        with self.path.open("w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4)
 
-    if user_id in data["user_data"]:
-        return data["user_data"][user_id]
-    else:
-        return None
 
-def create_userdata(user_id):
+class BotData(Json_):
+    def __init__(self, path: Path) -> None:
+        super().__init__(path)
 
-    data = read()
+    @property
+    def token(self) -> str:
+        data = self.read_all()
+        return data["bot_token"]
 
-    data["user_data"][user_id] = {"model_id": "0",
-                                  "speaker_id": "0",
-                                  "sdp_ratio": "0.2",
-                                  "noise": "0.6",
-                                  "noisew": "0.8",
-                                  "length": "1",
-                                  "split_interval": "0.5",
-                                  "assist_text": "",
-                                  "assist_text_weight": "1",
-                                  "style": "Neutral",
-                                  "style_weight": "5"}
+    @token.setter
+    def token(self, value: str):
+        if not re.match(".+\..+\..+", value):
+            raise ValueError("It is not in the form of a token.")
 
-    write(data)
+        data = self.read_all()
+        data["bot_token"] = value
+        self.write_all(data)
 
-def write_userdata(user_id, user_data):
+    @property
+    def prefix(self):
+        data = self.read_all()
+        return data["prefix"]
 
-    if type(user_id) == int:
-        user_id = str(user_id)
+    @prefix.setter
+    def prefix(self, value: str):
+        data = self.read_all()
+        data["prefix"] = value
+        self.write_all(data)
 
-    data = read()
+    @property
+    def users_data(self):
+        data = self.read_all()
+        return data["user_data"]
 
-    if user_id in data["user_data"]:
-        data["user_data"][user_id] = user_data
-    else:
-        create_userdata(user_id)
-        data = read()
-        data["user_data"][user_id] = user_data
+    @prefix.setter
+    def users_data(self, value: dict[str, typing.Any]):
+        data = self.read_all()
+        data["user_data"] = value
+        self.write_all(data)
 
-    write(data)
 
-def read_serverdata(server_id):
-    data_json = read()
+if True:  # 読み込まれたときの処理
+    botdata = BotData(Path("./data.json"))
 
-    if type(server_id) == int:
-         server_id = str(server_id)
+    data_template = {
+        "bot_token": "",
+        "device": "cuda",
+        "read_limit": 50,
+        "default_model": "",
+        "prefix": "s!",
+        "models_upperlimit": 3,
+        "number_of_cache_models": 2,
+        "user_data": {},
+        "server_data": {}
+    }
 
-    try:
-        servers_data = data_json["server_data"]
-    except KeyError:
-        data_json["server_data"] = {}
-        write(data_json)
+    # もしセーブデータがなければ作成
+    if not botdata.path.exists():
+        botdata.write_all(data_template)
 
-    servers_data_template = {"auto_join": False,
-                             "auto_join_read_channel": None,
-                             "dictionary_only_admin": True,
-                             "dictionary": {}}
+    # data_templateに新しいキーが追加されていれば追加する
+    botdata_dict = botdata.read_all()
+    botdata_keys = botdata_dict.keys()
 
-    try:
-        current_server_data = servers_data[server_id]
-    except KeyError:
-        servers_data[server_id] = servers_data_template
-        write(data_json)
-        current_server_data = servers_data[server_id]
+    for i in data_template.keys():
+        if not i in botdata_keys:
+            botdata_dict[i] = data_template[i]
+        botdata.write_all(botdata_dict)
 
-    t_l = False
-    for i in servers_data_template.keys():
+
+class User():
+    """
+    Attributes
+    -
+    username: (任意) 設定しておくとusernameを確認できる
+    user_id: jsonからデータを取り出したいdiscordのuser_id
+    speaker: 入力したuser_idの話者
+    style: 入力したuser_idのstyle
+    safetensor: 入力したuseridのsafetensor
+    json: 入力したuser_idのjson
+    npy: 入力したuser_idのnpy
+    length: 入力したuser_idのlength
+    """
+    userdict_template = {"model_name": "None",
+                         "speaker_name": "None",
+                         "style": "None",
+                         "length": 1.0}
+
+    def __init__(self, user_id: int, username: Optional[str] = "Default") -> None:
+        self.username = username
+        self.user_id = user_id
+
+        users_data: dict[str, typing.Any] = botdata.read_all()["user_data"]
+
+        # ユーザーがuser_dataに存在するならそのモデル、ないならdefaultのモデル
+        if f"{user_id}" in users_data.keys():
+            self.userdata: dict[str, typing.Any] = users_data[f"{user_id}"]
+            self.keycheck()
+
+            users_data: dict[str, typing.Any] = botdata.read_all()["user_data"]
+            self.userdata: dict[str, typing.Any] = users_data[f"{user_id}"]
+
+            self.__temp_modelname: str = self.userdata["model_name"]
+            self.is_user_indict = True
+        else:
+            self.userdata = copy.deepcopy(self.userdict_template)
+            self.__temp_modelname = botdata.read_all()["default_model"]
+            self.is_user_indict = False
+
+        # もしそのモデル名が存在しないならモデルフォルダの一番上を選択する
         try:
-            j = current_server_data[i]
+            modelfolder = ModelFolder(self.__temp_modelname)
         except KeyError:
-            current_server_data[i] = servers_data_template[i]
-            if t_l == False:
-                t_l = True
+            folders = model.get_modelfolders()
+            modelfolder = ModelFolder(folders[0])
 
-        if t_l == True:
-            write(data_json)
+        # もしその話者が存在しないなら一番最初を選択
+        if self.userdata["speaker_name"] in modelfolder.speakers:
+            self.speaker: typing.Any = self.userdata["speaker_name"]
+        else:
+            self.speaker = modelfolder.speakers[0]
+            if self.is_user_indict:
+                self.write_userdata("speaker_name", self.speaker)
 
-    return current_server_data
+        # もしそのスタイル名が存在しないならニュートラルまたは一番最初を選択
+        if self.userdata["style"] in modelfolder.styles:
+            self.style = self.userdata["style"]
+        else:
+            if "Neutral" in modelfolder.styles:
+                self.style = "Neutral"
+            else:
+                self.style: typing.Any = modelfolder.styles[0]
+            if self.is_user_indict:
+                self.write_userdata("style", self.style)
 
-def write_serverdata(server_id,server_data):
+        # ユーザーのモデル情報設定
+        self.safetensor = modelfolder.latest_safetensors
+        self.json = modelfolder.json
+        self.npy = modelfolder.npy
+        self.length: typing.Any = self.userdata["length"]
 
-    if type(server_id) == int:
-         server_id = str(server_id)
+    # Templateを確認してkeyが足りなかったら足す関数
+    def keycheck(self) -> None:
+        for i in self.userdict_template.keys():
+            if not i in self.userdata.keys():
+                self.write_userdata(i, self.userdict_template[i])
 
-    data_json = read()
-    data_json["server_data"][server_id] = server_data
+    def write_userdata(self, key: str, value: Union[str, int, float]) -> None:
+        if not key in self.userdict_template:
+            raise KeyError("This key does not exist in the template.")
 
-    write(data_json)
+        data = botdata.read_all()
+        data["user_data"][f"{self.user_id}"][key] = value
+        botdata.write_all(data)
 
-def read_server_dict(server_id: int) -> dict:
-    server_data = read_serverdata(server_id)
-    server_dict = server_data["dictionary"]
-    return server_dict
 
-def write_server_dict(server_id: int, data: dict):
-    server_data = read_serverdata(server_id)
-    server_data["dictionary"] = data
-    write_serverdata(server_id, server_data)
-
-def fullnum2halfnum(input):
-
-    fullnum = "０１２３４５６７８９．"
-    halfnum = "0123456789."
-
-    map = str.maketrans(fullnum, halfnum)
-    l = input.translate(map)
-
-    return l
-
+if __name__ == "__main__":
+    # 使用例
+    user1 = User(123456789, "Apple")
+    print(user1.user_id, user1.username)
+    print(user1.safetensor, user1.speaker, user1.npy, user1.json, user1.style, sep="\n")
