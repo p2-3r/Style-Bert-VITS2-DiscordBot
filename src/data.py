@@ -98,6 +98,7 @@ class User():
     -
     username: (任意) 設定しておくとusernameを確認できる
     user_id: jsonからデータを取り出したいdiscordのuser_id
+    model_name: モデル(フォルダ)の名前
     speaker: 入力したuser_idの話者
     style: 入力したuser_idのstyle
     safetensor: 入力したuseridのsafetensor
@@ -124,18 +125,18 @@ class User():
             users_data: dict[str, typing.Any] = botdata.read_all()["user_data"]
             self.userdata: dict[str, typing.Any] = users_data[f"{user_id}"]
 
-            self.__temp_modelname: str = self.userdata["model_name"]
+            self.model_name: str = self.userdata["model_name"]
             self.is_user_indict = True
         else:
             self.userdata = copy.deepcopy(self.userdict_template)
-            self.__temp_modelname = botdata.read_all()["default_model"]
+            self.model_name = botdata.read_all()["default_model"]
             self.is_user_indict = False
 
         # もしそのモデル名が存在しないならモデルフォルダの一番上を選択する
         try:
-            modelfolder = ModelFolder(self.__temp_modelname)
+            modelfolder = ModelFolder(self.model_name)
         except KeyError:
-            folders = model.get_modelfolders()
+            folders: list[str] = model.get_modelfolders()
             modelfolder = ModelFolder(folders[0])
 
         # もしその話者が存在しないなら一番最初を選択
@@ -161,7 +162,7 @@ class User():
         self.safetensor = modelfolder.latest_safetensors
         self.json = modelfolder.json
         self.npy = modelfolder.npy
-        self.length: typing.Any = self.userdata["length"]
+        self.length: float = self.userdata["length"]
 
     # Templateを確認してkeyが足りなかったら足す関数
     def keycheck(self) -> None:
@@ -174,7 +175,18 @@ class User():
             raise KeyError("This key does not exist in the template.")
 
         data = botdata.read_all()
+
+        if not f"{self.user_id}" in data["user_data"]:
+            self.create_userdata()
+            data = botdata.read_all()
+
         data["user_data"][f"{self.user_id}"][key] = value
+        botdata.write_all(data)
+
+    def create_userdata(self):
+        data = botdata.read_all()
+        data["user_data"][f"{self.user_id}"] = copy.deepcopy(self.userdict_template)
+
         botdata.write_all(data)
 
 

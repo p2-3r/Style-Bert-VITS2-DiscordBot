@@ -15,12 +15,10 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
         return
 
     elif before.channel is not None:
-
         # ボイスチャンネルがBOTだけになったら自動的に抜ける処理
-        check_list = [len(before.channel.members) != 1,  # 人数が一人だけではないなら反応しない
-                      before.channel.members[0] != client.user]  # それが自分ではないなら反応しない
+        # 人数が一人でそれが自分なら
+        if (len(before.channel.members) == 1 and before.channel.members[0] == client.user):
 
-        if not any(check_list):
             play_waitdict[f"{before.channel.guild.id}"] = []  # そのサーバーのwaitlistを初期化
             await before.channel.guild.voice_client.disconnect()
 

@@ -7,10 +7,10 @@ import io
 from scipy.io import wavfile as scipy_wave
 import discord
 
+from src.bot import DEVICE
 from src.data import User, botdata
 from src.model import DEBUG
 
-DEVICE = botdata.read_all()["device"]
 
 ttsmodels = {}
 models_order = []
@@ -18,13 +18,12 @@ models_upperlimit: int = botdata.read_all()["models_upperlimit"]
 
 if DEBUG:
     async def user_infer(text: str, ctx: Union[discord.Message, discord.Interaction]):
-        return
+        raise AssertionError("DEBUG variable is set to True.")
 
 if not DEBUG:
     from style_bert_vits2.tts_model import TTSModel
 
     async def user_infer(text: str, ctx: Union[discord.Message, discord.Interaction]):
-
         if isinstance(ctx, discord.Message):
             text = text
             user_id = ctx.author.id
@@ -54,6 +53,5 @@ if not DEBUG:
 
         bytes_ = io.BytesIO()
         scipy_wave.write(bytes_, sr, audio)
-        print(bytes_.getvalue())
 
         return bytes_

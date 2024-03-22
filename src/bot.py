@@ -3,8 +3,9 @@ import discord
 from src import data
 from src.data import botdata
 
-READ_LIMIT = botdata.read_all()["read_limit"]
 PREFIX = botdata.prefix
+DEVICE = botdata.read_all()["device"]
+READ_LIMIT = botdata.read_all()["read_limit"]
 
 intents = discord.Intents.all()
 client = discord.Client(intents=intents)
@@ -18,6 +19,6 @@ play_waitdict: dict[str, list[discord.Message]] = {}
 
 
 if True:  # 反応するためのコマンドを読み込み
-    from src.commands import on_slash, on_message, on_voice_state_update
+    from src.commands import on_slash, on_message, on_voice_state_update, on_interaction
 
 client.run(botdata.token)

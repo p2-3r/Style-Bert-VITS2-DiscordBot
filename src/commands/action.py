@@ -2,7 +2,8 @@ from typing import Union, Optional
 
 import discord
 
-from src.data import botdata
+from src import model
+from src.data import User, botdata
 from src.infer import user_infer
 from src.bot import PREFIX, READ_LIMIT, read_channel, play_waitdict
 
@@ -81,3 +82,77 @@ async def wav(text: str, ctx: discord.Message):
 
     bytes_ = await user_infer(text, ctx)
     return f"\"{text}\"", bytes_
+
+
+def display_change_model() -> tuple[discord.Embed, discord.ui.View]:
+    model_list_list: list[list[str]] = model.get_modelfolders(sep=25)
+
+    # モデルが26個以上ならページ移動ボタンを追加
+    if len(model_list_list) >= 2:
+        add_pagebutton = True
+    else:
+        add_pagebutton = False
+
+    model_list = model_list_list[0]
+
+    description = f"1: {model_list[0]}"
+    for i, val in enumerate(model_list):
+        if i != 0:
+            description += f"\n{i+1}: {val}"
+
+    class ChangeModel_View(discord.ui.View):
+        def __init__(self, *, timeout: float | None = 180):
+            super().__init__(timeout=timeout)
+
+            if add_pagebutton:
+                pageback_button = discord.ui.Button(label="<-", style=discord.ButtonStyle.primary, custom_id="model_pageback", disabled=True)
+                pagenow_button = discord.ui.Button(label="0", style=discord.ButtonStyle.gray, disabled=True)
+                pageforward_button = discord.ui.Button(label="->", style=discord.ButtonStyle.primary, custom_id="model_pageforward")
+
+                [self.add_item(i) for i in [pageback_button, pagenow_button, pageforward_button]]
+
+            select_item = [discord.SelectOption(label=i, value=i) for i in model_list]
+            self.add_item(discord.ui.Select(options=select_item, custom_id="change_model", placeholder="使用したいモデルを選択してください..."))
+
+    embed = discord.Embed(title="使用できるモデル一覧", description=description)
+    view = ChangeModel_View()
+
+    return embed, view
+
+
+def display_change_speaker(author: Union[discord.Member, discord.User]) -> tuple[discord.Embed, discord.ui.View]:
+    action_user = User(author.id, author.name)
+    model_name = action_user.model_name
+    speaker_list_list = model.get_speakers(model_name, sep=25)
+
+    # モデルが26個以上ならページ移動ボタンを追加
+    if len(speaker_list_list) >= 2:
+        add_pagebutton = True
+    else:
+        add_pagebutton = False
+
+    speaker_list = speaker_list_list[0]
+
+    description = f"1: {speaker_list[0]}"
+    for i, val in enumerate(speaker_list):
+        if i != 0:
+            description += f"\n{i+1}: {val}"
+
+    class ChangeSpeaker_View(discord.ui.View):
+        def __init__(self, *, timeout: float | None = 180):
+            super().__init__(timeout=timeout)
+
+            if add_pagebutton:
+                pageback_button = discord.ui.Button(label="<-", style=discord.ButtonStyle.primary, custom_id="speaker_pageback", disabled=True)
+                pagenow_button = discord.ui.Button(label="0", style=discord.ButtonStyle.gray, disabled=True)
+                pageforward_button = discord.ui.Button(label="->", style=discord.ButtonStyle.primary, custom_id="speaker_pageforward")
+
+                [self.add_item(i) for i in [pageback_button, pagenow_button, pageforward_button]]
+
+            select_item = [discord.SelectOption(label=i, value=f"{model_name}||{i}") for i in speaker_list]
+            self.add_item(discord.ui.Select(options=select_item, custom_id="change_speaker", placeholder="使用したい話者を選択してください..."))
+
+    embed = discord.Embed(title=f"モデル: {model_name} の話者一覧", description=description)
+    view = ChangeSpeaker_View()
+
+    return embed, view

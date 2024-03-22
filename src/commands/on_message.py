@@ -7,9 +7,8 @@ import discord
 from scipy.io import wavfile as sciwav
 
 from src.commands import action
-from src.bot import client, read_channel, play_waitdict
+from src.bot import client, read_channel, play_waitdict, PREFIX, READ_LIMIT
 from src.data import botdata
-from src.bot import PREFIX, READ_LIMIT
 from src.infer import user_infer
 
 # 通常のメッセージに関する処理
@@ -51,6 +50,14 @@ async def on_message(message: discord.Message):
             else:
                 reply, bytes_ = await action.wav(message_nopref[4:], message)
                 await message.channel.send(content=reply, file=discord.File(bytes_, filename="Message.wav"))
+
+        elif message_nopref.startswith("model"):
+            embed, view = action.display_change_model()
+            await message.channel.send(embed=embed, view=view)
+
+        elif message_nopref.startswith("speaker"):
+            embed, view = action.display_change_speaker(message.author)
+            await message.channel.send(embed=embed, view=view)
 
     # BOTがそのギルドでVCに参加していた時に読み上げる
     elif message.guild.voice_client is not None:
