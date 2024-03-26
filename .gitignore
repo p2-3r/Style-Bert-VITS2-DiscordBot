@@ -1,5 +1,5 @@
 /venv
 data.json
 /Temp
-/Tests
+/.vscode
 __pycache__

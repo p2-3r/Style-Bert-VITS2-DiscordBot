@@ -2,14 +2,16 @@ from pathlib import Path
 import json
 import re
 import typing
-from typing import Union, Optional
+from typing import Optional
 import copy
+
+from networkx import is_semieulerian
 
 from src import model
 from src.model import ModelFolder
 
 
-class Json_():
+class Json_:
     def __init__(self, path: Path) -> None:
         self.path = path
 
@@ -19,7 +21,7 @@ class Json_():
 
     def write_all(self, data: dict[str, typing.Any]) -> None:
         with self.path.open("w", encoding="utf-8") as f:
-            json.dump(data, f, indent=4)
+            json.dump(data, f, indent=4, ensure_ascii=False)
 
 
 class BotData(Json_):
@@ -75,7 +77,7 @@ if True:  # 読み込まれたときの処理
         "models_upperlimit": 3,
         "number_of_cache_models": 2,
         "user_data": {},
-        "server_data": {}
+        "server_data": {},
     }
 
     # もしセーブデータがなければ作成
@@ -87,12 +89,12 @@ if True:  # 読み込まれたときの処理
     botdata_keys = botdata_dict.keys()
 
     for i in data_template.keys():
-        if not i in botdata_keys:
+        if i not in botdata_keys:
             botdata_dict[i] = data_template[i]
         botdata.write_all(botdata_dict)
 
 
-class User():
+class User:
     """
     Attributes
     -
@@ -106,10 +108,13 @@ class User():
     npy: 入力したuser_idのnpy
     length: 入力したuser_idのlength
     """
-    userdict_template = {"model_name": "None",
-                         "speaker_name": "None",
-                         "style": "None",
-                         "length": 1.0}
+
+    userdict_template = {
+        "model_name": "None",
+        "speaker_name": "None",
+        "style": "None",
+        "length": 1.0,
+    }
 
     def __init__(self, user_id: int, username: Optional[str] = "Default") -> None:
         self.username = username
@@ -138,6 +143,8 @@ class User():
         except KeyError:
             folders: list[str] = model.get_modelfolders()
             modelfolder = ModelFolder(folders[0])
+            if self.is_user_indict:
+                self.write_userdata("model_name", folders[0])
 
         # もしその話者が存在しないなら一番最初を選択
         if self.userdata["speaker_name"] in modelfolder.speakers:
@@ -167,21 +174,22 @@ class User():
     # Templateを確認してkeyが足りなかったら足す関数
     def keycheck(self) -> None:
         for i in self.userdict_template.keys():
-            if not i in self.userdata.keys():
+            if i not in self.userdata.keys():
                 self.write_userdata(i, self.userdict_template[i])
 
-    def write_userdata(self, key: str, value: Union[str, int, float]) -> None:
-        if not key in self.userdict_template:
+    def write_userdata(self, key: str, value: typing.Any) -> None:
+        if key not in self.userdict_template:
             raise KeyError("This key does not exist in the template.")
 
         data = botdata.read_all()
 
-        if not f"{self.user_id}" in data["user_data"]:
+        if f"{self.user_id}" not in data["user_data"]:
             self.create_userdata()
             data = botdata.read_all()
 
         data["user_data"][f"{self.user_id}"][key] = value
         botdata.write_all(data)
+        data = botdata.read_all()
 
     def create_userdata(self):
         data = botdata.read_all()
@@ -190,8 +198,58 @@ class User():
         botdata.write_all(data)
 
 
-if __name__ == "__main__":
-    # 使用例
-    user1 = User(123456789, "Apple")
-    print(user1.user_id, user1.username)
-    print(user1.safetensor, user1.speaker, user1.npy, user1.json, user1.style, sep="\n")
+class Server:
+    server_template = {"dic": {},
+                       "dic_onlyadmin": True,
+                       "auto_join": None}
+
+    def __init__(self, server_id: int, server_name: Optional[str] = "Default") -> None:
+        self.id = server_id
+        self.name = server_name
+
+        botdata_dict = botdata.read_all()
+        servers_data: dict[str, typing.Any] = botdata_dict["server_data"]
+
+        # もしサーバーデータが作成されていなければ作成する
+        if f"{self.id}" not in servers_data:
+            servers_data[f"{self.id}"] = copy.deepcopy(self.server_template)
+            botdata.write_all(botdata_dict)
+
+        self.data: dict[str, typing.Any] = servers_data[f"{self.id}"]
+        self.keycheck()
+
+    # keyとvalueを指定して変更する関数
+    def write_serverdata(self, key: str, value: typing.Any):
+        if key not in self.server_template:
+            raise KeyError("This key does not exist in the template.")
+
+        data = botdata.read_all()
+        data["server_data"][f"{self.id}"][key] = value
+        botdata.write_all(data)
+
+        self.data: dict[str, typing.Any] = botdata.read_all()["server_data"][f"{self.id}"]
+
+    # 変換前と変換後を指定してサーバー辞書に書き込む関数
+    def write_dic(self, before: str, after: str):
+        data = botdata.read_all()
+        data["server_data"][f"{self.id}"]["dic"][before] = after
+        botdata.write_all(data)
+
+        self.data: dict[str, typing.Any] = botdata.read_all()["server_data"][f"{self.id}"]
+
+    def delete_dic(self, key: str):
+        data = botdata.read_all()
+        server_dict: dict[str, str] = data["server_data"][f"{self.id}"]["dic"]
+
+        try:
+            server_dict.pop(key)
+        except KeyError:
+            raise KeyError("The key does not exist in the server dictionary.")
+
+        botdata.write_all(data)
+
+    # Templateを確認してkeyが足りなかったら足す関数
+    def keycheck(self) -> None:
+        for i in self.server_template.keys():
+            if i not in self.data.keys():
+                self.write_serverdata(i, self.server_template[i])

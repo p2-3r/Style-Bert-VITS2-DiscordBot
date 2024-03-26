@@ -1,3 +1,5 @@
 from src import data
+from src.ColorPrint import Existing as clp
 
-from src import bot  # Botを実行
+if True:
+    from src import bot  # Botを実行

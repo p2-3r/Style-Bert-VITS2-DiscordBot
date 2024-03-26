@@ -2,35 +2,31 @@ from pathlib import Path
 from glob import glob
 import re
 from typing import Union, Optional
-from pprint import pprint
 
-DEBUG = False
+DEBUG = True
 
 if not DEBUG:
     from style_bert_vits2.tts_model import TTSModel
     from style_bert_vits2.nlp import bert_models
     from style_bert_vits2.constants import Languages
-    from style_bert_vits2.nlp.japanese.g2p_utils import g2kata_tone, g2p
+    from style_bert_vits2.nlp.japanese.g2p_utils import g2kata_tone
     from style_bert_vits2.nlp.japanese.normalizer import normalize_text
 
-    bert_models.load_model(
-        Languages.JP, "ku-nlp/deberta-v2-large-japanese-char-wwm")
-    bert_models.load_tokenizer(
-        Languages.JP, "ku-nlp/deberta-v2-large-japanese-char-wwm")
+    bert_models.load_model(Languages.JP, "ku-nlp/deberta-v2-large-japanese-char-wwm")
+    bert_models.load_tokenizer(Languages.JP, "ku-nlp/deberta-v2-large-japanese-char-wwm")
 
-    class Load():
+    class Load:
         @classmethod
         def model(cls, *, model_file: Path, config_file: Path, style_file: Path, device: str = "cuda"):
             model = TTSModel(
                 model_path=model_file,
                 config_path=config_file,
                 style_vec_path=style_file,
-                device=device
+                device=device,
             )
             return model
 
-    class Model_Get():
-
+    class Model_Get:
         @classmethod
         def speakers(cls, model: TTSModel) -> list[str]:
             return list(model.id2spk.values())
@@ -47,15 +43,15 @@ if not DEBUG:
 assets_root = Path("model_assets")
 
 
-class ModelFolder():
+class ModelFolder:
     def __init__(self, model_name: str) -> None:
         g = glob(str(assets_root) + "/**/")
         folder_names = [Path(i) for i in g]
 
         model_names = []
         for i in folder_names:
-            config_json = (i/"config.json").exists()
-            vectors_npy = (i/"style_vectors.npy").exists()
+            config_json = (i / "config.json").exists()
+            vectors_npy = (i / "style_vectors.npy").exists()
             model_safetensors = len(list(i.glob("*.safetensors")))
 
             if all([config_json, vectors_npy, model_safetensors]):
@@ -75,8 +71,11 @@ class ModelFolder():
 
     @property
     def latest_safetensors(self) -> Path:
-        re_safetensors = [i for i in self.safetensors if re.match(
-            ".+_e[0-9]+_s[0-9]+.safetensors", i.name)]
+        re_safetensors = [
+            i
+            for i in self.safetensors
+            if re.match(".+_e[0-9]+_s[0-9]+.safetensors", i.name)
+        ]
 
         if re_safetensors:
             stem = [i.stem for i in re_safetensors]
@@ -101,7 +100,7 @@ class ModelFolder():
                 model_path=self.latest_safetensors,
                 config_path=self.json,
                 style_vec_path=self.npy,
-                device="cpu"
+                device="cpu",
             )
 
             return Model_Get.speakers(model)
@@ -115,11 +114,11 @@ class ModelFolder():
                 model_path=self.latest_safetensors,
                 config_path=self.json,
                 style_vec_path=self.npy,
-                device="cpu"
+                device="cpu",
             )
 
             return Model_Get.styles(model)
-        return ['Neutral', 'Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise']
+        return ["Neutral", "Angry", "Disgust", "Fear", "Happy", "Sad", "Surprise"]
 
 
 def get_modelfolders(*, sep: Optional[int] = None) -> Union[list[str], list[list[str]]]:
@@ -128,18 +127,15 @@ def get_modelfolders(*, sep: Optional[int] = None) -> Union[list[str], list[list
 
     model_names = []
     for i in folder_names:
-        config_json = (i/"config.json").exists()
-        vectors_npy = (i/"style_vectors.npy").exists()
+        config_json = (i / "config.json").exists()
+        vectors_npy = (i / "style_vectors.npy").exists()
         model_safetensors = len(list(i.glob("*.safetensors")))
 
         if all([config_json, vectors_npy, model_safetensors]):
             model_names.append(i.name)
 
-    # model_names = [f"TestModel-{i}" for i in range(1, 60)]  # TODO テスト用変数後で消す
-
     # sepに値が入っていた場合model_namesをsepの値で分割したリストを返す
     if sep is not None:
-
         if sep <= 0:
             raise ValueError("'sep' value must be at least 1.")
 
@@ -147,7 +143,7 @@ def get_modelfolders(*, sep: Optional[int] = None) -> Union[list[str], list[list
         if model_len > sep:
             templist = []
             for i in range(model_len // sep):
-                templist.append(model_names[0+(i*sep):sep+(i*sep)])
+                templist.append(model_names[0 + (i * sep): sep + (i * sep)])
 
             if (mod := model_len % sep) != 0:
                 templist.append(model_names[-mod:])
@@ -167,7 +163,6 @@ def get_speakers(model_name: str, *, sep: Optional[int] = None) -> Union[list[st
 
     # sepに値が入っていた場合model_namesをsepの値で分割したリストを返す
     if sep is not None:
-
         if sep <= 0:
             raise ValueError("'sep' value must be at least 1.")
 
@@ -175,7 +170,7 @@ def get_speakers(model_name: str, *, sep: Optional[int] = None) -> Union[list[st
         if speaker_len > sep:
             templist = []
             for i in range(speaker_len // sep):
-                templist.append(speaker_list[0+(i*sep):sep+(i*sep)])
+                templist.append(speaker_list[0 + (i * sep): sep + (i * sep)])
 
             if (mod := speaker_len % sep) != 0:
                 templist.append(speaker_list[-mod:])
