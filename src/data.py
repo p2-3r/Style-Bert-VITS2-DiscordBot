@@ -75,7 +75,6 @@ if True:  # 読み込まれたときの処理
         "default_model": "",
         "prefix": "s!",
         "models_upperlimit": 3,
-        "number_of_cache_models": 2,
         "user_data": {},
         "server_data": {},
     }
