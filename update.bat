@@ -9,3 +9,5 @@ if exist "downloads/PortableGit/bin/git.exe" (
 )
 
 %GIT% pull origin dev
+echo [33mCOMPLETE[0m^|アップデートが完了しました。
+pause
