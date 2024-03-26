@@ -1,5 +1,27 @@
+import re
+
 from src import data
+from src.data import botdata
 from src.ColorPrint import Existing as clp
+
+json_ = botdata.read_all()
+
+if not re.match(".+\..+\..+", json_["bot_token"]):
+    print("-"*50)
+    print("初期設定を行います。Botのトークンを入力してください。")
+    print("-"*50)
+
+    while True:
+        input_token = input("TOKEN: ")
+
+        input_token = input_token.replace("\"", "")
+        try:
+            botdata.token = input_token
+        except ValueError:
+            print("トークンの形式ではありません。\nもう一度入力してください。")
+            continue
+
+        break
 
 if True:
     from src import bot  # Botを実行

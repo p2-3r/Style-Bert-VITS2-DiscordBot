@@ -2,9 +2,15 @@
 cd %~dp0
 chcp 65001 > NUL
 
+if exist "downloads/python-3.10.11-embed-amd64/python.exe" (
+    set PYTHON_PATH="downloads/python-3.10.11-embed-amd64/python.exe"
+) else (
+    set PYTHON_PATH="python"
+)
+
 if not exist "./venv/Scripts/activate" (
     echo [34mINFO[0m^|起動準備中...
-    python -m venv venv
+    %PYTHON_PATH% -m venv venv
     call "./venv/Scripts/activate"
     echo [34mINFO[0m^|起動準備中...
     echo [34mINFO[0m^|必要なライブラリをダウンロードしています...
