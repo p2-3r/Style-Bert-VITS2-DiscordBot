@@ -26,7 +26,7 @@ del %GIT_NAME%
 set GIT=PortableGit\bin\git.exe
 
 echo [34mINFO[0m^|Downloading BOT program...
-%GIT% clone -b dev https://github.com/p2-3r/Style-Bert-VITS2-DiscordBot.git
+%GIT% clone https://github.com/p2-3r/Style-Bert-VITS2-DiscordBot.git
 
 echo [34mINFO[0m^|Downloading ffmpeg...
 %CURL% -L -o %FMP_NAME% %FMP_URL%
