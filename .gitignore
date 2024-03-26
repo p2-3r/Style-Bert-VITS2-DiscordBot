@@ -1,0 +1,5 @@
+/venv
+data.json
+/Temp
+/.vscode
+__pycache__
