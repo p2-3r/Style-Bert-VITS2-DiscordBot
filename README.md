@@ -6,6 +6,10 @@
 
 アップデート完了までお待ちください
 
+# アップデート: ライブラリ版のSBV2に対応しました。
+
+v2.0以前を使用している方はすみませんが、インストールしなおしてください。
+
 # Style-Bert-VITS2-DiscordBot
 
 Style-Bert-VITS2のライブラリを使ったDiscordの読み上げボットです
@@ -71,6 +75,8 @@ pip install -r requirements.txt
 
 python main.py
 ```
+
+一度インストールすると、次からは "bot_start.bat" で起動できます。
 
 ## 起動準備
 
