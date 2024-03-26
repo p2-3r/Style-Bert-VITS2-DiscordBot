@@ -17,23 +17,23 @@ set PYTHON_ZIPNAME=python-3.10.11-embed-amd64.zip
 set PYTHON="python-3.10.11-embed-amd64/python.exe"
 
 
-echo [34mINFO[0m^|Gitã‚’ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ã—ã¦ã„ã¾ã™...
+echo [34mINFO[0m^|Git‚ðƒ_ƒEƒ“ƒ[ƒh‚µ‚Ä‚¢‚Ü‚·...
 %CURL% -L -o %GIT_NAME% %GIT_URL%
 
-echo [34mINFO[0m^|Gitã‚’å±•é–‹ã—ã¦ã„ã¾ã™...
+echo [34mINFO[0m^|Git‚ð“WŠJ‚µ‚Ä‚¢‚Ü‚·...
 %GIT_NAME% -y
 del %GIT_NAME%
 set GIT=PortableGit\bin\git.exe
 
-echo [34mINFO[0m^|BOTã®ãƒ—ãƒ­ã‚°ãƒ©ãƒ ã‚’ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ã—ã¦ã„ã¾ã™...
+echo [34mINFO[0m^|BOT‚ÌƒvƒƒOƒ‰ƒ€‚ðƒ_ƒEƒ“ƒ[ƒh‚µ‚Ä‚¢‚Ü‚·...
 %GIT% clone -b dev https://github.com/p2-3r/Style-Bert-VITS2-DiscordBot.git
 
-echo [34mINFO[0m^|ffmpegã‚’ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ã—ã¦ã„ã¾ã™...
+echo [34mINFO[0m^|ffmpeg‚ðƒ_ƒEƒ“ƒ[ƒh‚µ‚Ä‚¢‚Ü‚·...
 %CURL% -L -o %FMP_NAME% %FMP_URL%
 %POWERSHELL% Expand-Archive -Path %FMP_NAME%
 del %FMP_NAME%
 
-echo [34mINFO[0m^|Pythonã‚’ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ã—ã¦ã„ã¾ã™...
+echo [34mINFO[0m^|Python‚ðƒ_ƒEƒ“ƒ[ƒh‚µ‚Ä‚¢‚Ü‚·...
 %CURL% -L -o %PYTHON_ZIPNAME% %PYTHON_URL%
 %POWERSHELL% Expand-Archive -Path %PYTHON_ZIPNAME%
 del %PYTHON_ZIPNAME%
@@ -49,7 +49,7 @@ move /y ffmpeg-master-latest-win64-gpl "Style-Bert-VITS2-DiscordBot/downloads/ff
 move /y %PYTHON_DIR% "Style-Bert-VITS2-DiscordBot/downloads/%PYTHON_DIR%"
 set temp_=%ERRORLEVEL%
 
-echo [33mCOMPLETE[0m^|ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ãŒå®Œäº†ã—ã¾ã—ãŸã€‚èµ·å‹•ã™ã‚‹ã«ã¯ãƒ•ã‚©ãƒ«ãƒ€å†…ã®bot_start.batã‚’èµ·å‹•ã—ã¦ãã ã•ã„ã€‚
+echo [33mCOMPLETE[0m^|ƒCƒ“ƒXƒg[ƒ‹‚ªŠ®—¹‚µ‚Ü‚µ‚½B‹N“®‚·‚é‚É‚ÍƒtƒHƒ‹ƒ_“à‚Ìbot_start.bat‚ð‹N“®‚µ‚Ä‚­‚¾‚³‚¢B
 pause
 
 del "%~f0"
