@@ -14,13 +14,13 @@ if not exist "./venv/Scripts/activate" (
     call "./venv/Scripts/activate"
     echo [34mINFO[0m^|起動準備中...
     echo [34mINFO[0m^|必要なライブラリをダウンロードしています...
-    pip install -r requirements.txt
+    %PYTHON_PATH% -m pip install -r requirements.txt
     echo [33mCOMPLETE[0m^|ライブラリのインストールが完了しました。
 ) else (
     call "./venv/Scripts/activate"
 )
 
 echo [34mINFO[0m^|Running the bot...
-python main.py
+%PYTHON_PATH% main.py
 
 pause
