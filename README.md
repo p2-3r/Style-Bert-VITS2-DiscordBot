@@ -40,7 +40,7 @@ Style-Bert-VITS2のライブラリを使ったDiscordの読み上げボットで
 
 ## インストール
 
-(あとでurlを貼る) から "SBV2_DiscordBot_Install.bat" のバッチファイルを
+[ここ](https://github.com/p2-3r/Style-Bert-VITS2-DiscordBot/releases/download/v2.0/SBV2_DiscordBot_Install.bat) から "SBV2_DiscordBot_Install.bat" のバッチファイルを
 
 ダウンロードしてインストールしたい場所で起動します。
 
