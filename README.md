@@ -1,3 +1,11 @@
+# アップデート中
+
+現在アップデート中です
+
+(リポジトリの名前を変更したり音声生成をライブラリ版のSBV2に変えたり、インストール方法の変更など)
+
+アップデート完了までお待ちください
+
 # Discord-ReadTextBot-for-Style-Bert-VITS2-API
 Style-Bert-VITS2のAPIを使ったDiscordの読み上げボットです
 
