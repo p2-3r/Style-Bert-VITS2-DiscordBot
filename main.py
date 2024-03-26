@@ -1,10 +1,19 @@
 import re
+import sys
 
 from src import data
 from src.data import botdata
+from src.model import get_modelfolders
 from src.ColorPrint import Existing as clp
 
 json_ = botdata.read_all()
+
+folders = get_modelfolders()
+if folders == []:
+    clp.error("モデルがありません。model_assetsフォルダーにモデルを入れてから再起動してください。")
+    input()
+    sys.exit()
+
 
 if not re.match(".+\..+\..+", json_["bot_token"]):
     print("-"*50)

@@ -10,7 +10,7 @@ PREFIX = botdata.prefix
 DEVICE = botdata.read_all()["device"]
 READ_LIMIT = botdata.read_all()["read_limit"]
 
-fp = Path("./downloads/ffmpeg-master-latest-win64-gpl/ffmpeg-master-latest-win64-gpl/bin")
+fp = Path("./downloads/ffmpeg-master-latest-win64-gpl/ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe")
 if fp.exists():
     ffmpeg_path = str(fp.absolute())
 else:

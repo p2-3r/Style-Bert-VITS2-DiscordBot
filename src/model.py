@@ -3,7 +3,7 @@ from glob import glob
 import re
 from typing import Union, Optional
 
-DEBUG = True
+DEBUG = False
 
 if not DEBUG:
     from style_bert_vits2.tts_model import TTSModel
