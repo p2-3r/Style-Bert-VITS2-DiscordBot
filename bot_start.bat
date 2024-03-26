@@ -11,13 +11,12 @@ if exist "downloads/python-3.10.11-embed-amd64/python.exe" (
 if %PYTHON_PATH%=="python" (
 
     if not exist "./venv/Scripts/activate" (
-        echo [34mINFO[0m^|起動準備中...
+        echo [34mINFO[0m^|Preparing to launch...
         %PYTHON_PATH% -m venv venv
         call "./venv/Scripts/activate"
-        echo [34mINFO[0m^|必要なライブラリをダウンロードしています...
+        echo [34mINFO[0m^|Downloading libraries...
         pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
         pip install -r requirements.txt
-        echo [33mCOMPLETE[0m^|ライブラリのインストールが完了しました。
     ) else (
         call "./venv/Scripts/activate"
     )
@@ -27,13 +26,12 @@ if %PYTHON_PATH%=="python" (
 
         %PYTHON_PATH% -m virtualenv --copies venv
 
-        echo [34mINFO[0m^|起動準備中...
+        echo [34mINFO[0m^|Preparing to launch...
         call "./venv/Scripts/activate"
 
-        echo [34mINFO[0m^|必要なライブラリをダウンロードしています...
+        echo [34mINFO[0m^|Downloading libraries...
         pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
         pip install -r requirements.txt
-        echo [33mCOMPLETE[0m^|ライブラリのインストールが完了しました。
     ) else (
         call "./venv/Scripts/activate"
     )

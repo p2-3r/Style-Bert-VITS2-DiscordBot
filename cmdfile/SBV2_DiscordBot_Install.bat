@@ -17,23 +17,23 @@ set PYTHON_ZIPNAME=python-3.10.11-embed-amd64.zip
 set PYTHON="python-3.10.11-embed-amd64/python.exe"
 
 
-echo [34mINFO[0m^|Gitをダウンロードしています...
+echo [34mINFO[0m^|Downloading GIT...
 %CURL% -L -o %GIT_NAME% %GIT_URL%
 
-echo [34mINFO[0m^|Gitを展開しています...
+echo [34mINFO[0m^|Unzip Git...
 %GIT_NAME% -y
 del %GIT_NAME%
 set GIT=PortableGit\bin\git.exe
 
-echo [34mINFO[0m^|BOTのプログラムをダウンロードしています...
+echo [34mINFO[0m^|Downloading BOT program...
 %GIT% clone -b dev https://github.com/p2-3r/Style-Bert-VITS2-DiscordBot.git
 
-echo [34mINFO[0m^|ffmpegをダウンロードしています...
+echo [34mINFO[0m^|Downloading ffmpeg...
 %CURL% -L -o %FMP_NAME% %FMP_URL%
 %POWERSHELL% Expand-Archive -Path %FMP_NAME%
 del %FMP_NAME%
 
-echo [34mINFO[0m^|Pythonをダウンロードしています...
+echo [34mINFO[0m^|Downloading Python...
 %CURL% -L -o %PYTHON_ZIPNAME% %PYTHON_URL%
 %POWERSHELL% Expand-Archive -Path %PYTHON_ZIPNAME%
 del %PYTHON_ZIPNAME%
@@ -49,7 +49,7 @@ move /y ffmpeg-master-latest-win64-gpl "Style-Bert-VITS2-DiscordBot/downloads/ff
 move /y %PYTHON_DIR% "Style-Bert-VITS2-DiscordBot/downloads/%PYTHON_DIR%"
 set temp_=%ERRORLEVEL%
 
-echo [33mCOMPLETE[0m^|インストールが完了しました。起動するにはフォルダ内のbot_start.batを起動してください。
+echo [33mCOMPLETE[0m^|Download is complete. To start, please launch bot_start.bat.
 pause
 
 del "%~f0"
