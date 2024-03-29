@@ -22,6 +22,7 @@ def help() -> discord.Embed:
                   f"**{PREFIX}wav (content)**": "指定した内容を生成してその音声ファイルを添付したメッセージを送信します",
                   f"**{PREFIX}join**": "使用した人がいるボイスチャンネルに接続します",
                   f"**{PREFIX}leave**": "ボイスチャンネルから切断します",
+                  f"**{PREFIX}now**": "現在のモデル、話者、スタイルを表示します",
                   f"**{PREFIX}model**": "使用できるモデルの変更メニューを表示します",
                   f"**{PREFIX}speaker**": "現在のモデルの話者変更メニューを表示します",
                   f"**{PREFIX}style**": "現在のモデルのスタイル変更メニューを表示します。",
@@ -316,3 +317,19 @@ def length(input_num: float, ctx: Union[discord.Message, discord.Interaction]):
     user.write_userdata("length", input_num)
 
     return f"読み上げ速度を **{input_num}** に変更しました。"
+
+
+def now(ctx: Union[discord.Message, discord.Interaction]) -> discord.Embed:
+
+    if isinstance(ctx, discord.Message):
+        user = User(ctx.author.id, ctx.author.name)
+    elif isinstance(ctx, discord.Interaction):
+        user = User(ctx.user.id, ctx.user.name)
+
+    description = f"**モデル**: {user.model_name}\n" \
+                  f"**話者**: {user.speaker}\n" \
+                  f"**スタイル**: {user.style}"
+
+    embed = discord.Embed(title=f"**{user.username}** の現在のモデル情報", description=description)
+
+    return embed
