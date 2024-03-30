@@ -27,7 +27,8 @@ def help() -> discord.Embed:
                   f"**{PREFIX}speaker**": "現在のモデルの話者変更メニューを表示します",
                   f"**{PREFIX}style**": "現在のモデルのスタイル変更メニューを表示します。",
                   f"**{PREFIX}dic**": "サーバー辞書メニューを表示します",
-                  f"**{PREFIX}server**": "自動参加などサーバーに関する設定を表示します"}
+                  f"**{PREFIX}server**": "自動参加などサーバーに関する設定を表示します",
+                  f"**{PREFIX}about**": "このBOTについて表示します"}
 
     embed = discord.Embed(title="このBOTのヘルプ")
 
