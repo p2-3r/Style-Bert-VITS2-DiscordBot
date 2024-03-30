@@ -81,8 +81,16 @@ async def dic(ctx: discord.Interaction):
     embed, view = action.dic(ctx)
     await ctx.response.send_message(embed=embed, view=view)
 
+
 @tree.command(name="now", description="現在使用しているモデル、話者、スタイルを表示します。")
 @discord.app_commands.guild_only
 async def now(ctx: discord.Interaction):
     embed = action.now(ctx)
+    await ctx.response.send_message(embed=embed)
+
+
+@tree.command(name="about", description="このBOTについてのリンクを表示します。")
+@discord.app_commands.guild_only
+async def about(ctx: discord.Interaction):
+    embed = action.about()
     await ctx.response.send_message(embed=embed)

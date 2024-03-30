@@ -99,6 +99,10 @@ async def on_message(message: discord.Message):
             embed = action.now(message)
             await message.channel.send(embed=embed)
 
+        elif message_nopref.startswith("about"):
+            embed = action.about()
+            await message.channel.send(embed=embed)
+
     # BOTがそのギルドでVCに参加していた時に読み上げる
     elif message.guild.voice_client is not None:
 
