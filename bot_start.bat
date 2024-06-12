@@ -15,8 +15,9 @@ if %PYTHON_PATH%=="python" (
         %PYTHON_PATH% -m venv venv
         call "./venv/Scripts/activate"
         echo [34mINFO[0m^|Downloading libraries...
-        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-        pip install -r requirements.txt
+        pip install uv
+        uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+        uv pip install -r requirements.txt
     ) else (
         call "./venv/Scripts/activate"
     )
@@ -30,8 +31,9 @@ if %PYTHON_PATH%=="python" (
         call "./venv/Scripts/activate"
 
         echo [34mINFO[0m^|Downloading libraries...
-        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-        pip install -r requirements.txt
+        pip install uv
+        uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+        uv pip install -r requirements.txt
     ) else (
         call "./venv/Scripts/activate"
     )
